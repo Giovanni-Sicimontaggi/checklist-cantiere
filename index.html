@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>🏗 Checklist Cantiere</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--card:#1e2335;--border:#2a3050;
+  --accent:#f5a623;--accent2:#3ecf8e;--danger:#ff5c5c;--info:#5b9cf6;--purple:#a855f7;
+  --text:#e8ecf4;--muted:#7a85a3;--radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;font-size:14px}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;background:none}
+input,textarea,select{font-family:inherit;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;width:100%;font-size:14px;transition:border-color .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none}
+textarea{resize:vertical;min-height:60px}
+label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+h1{font-size:20px;font-weight:800}
+h2{font-size:18px;font-weight:800}
+h3{font-size:16px;font-weight:700}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.b-ok{background:#1a3d2e;color:var(--accent2)}.b-no{background:#3d1a1a;color:var(--danger)}
+.b-na{background:#2a2e3d;color:var(--muted)}.b-wip{background:#3d2d0a;color:var(--accent)}
+.b-nc{background:#1a2a3d;color:var(--info)}.b-seg{background:#2d1a3d;color:var(--purple)}
+
+/* BUTTONS */
+.btn{padding:8px 18px;border-radius:var(--radius);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:opacity .15s,transform .1s;border:none}
+.btn:hover{opacity:.85;transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn-primary{background:var(--accent);color:#111}.btn-success{background:var(--accent2);color:#111}
+.btn-danger{background:var(--danger);color:#fff}.btn-info{background:var(--info);color:#fff}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:6px}
+.icon-btn{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--muted);font-size:13px;padding:4px 7px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;transition:all .15s}
+.icon-btn:hover{border-color:var(--border);color:var(--text)}
+.on-note{color:var(--accent2)!important;border-color:#3ecf8e44!important;background:#1a3d2e!important}
+.on-file{color:var(--accent)!important;border-color:#f5a62344!important;background:#3d2d0a!important}
+.on-nc{color:var(--info)!important;border-color:#5b9cf644!important;background:#1a2a3d!important}
+.on-seg{color:var(--purple)!important;border-color:#a855f744!important;background:#2d1a3d!important}
+.on-anom{color:var(--danger)!important;border-color:#ff5c5c44!important;background:#3d1a1a!important}
+
+/* LAYOUT */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.surface{background:var(--surface);border-radius:8px;padding:10px 14px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.flex{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flex-col{display:flex;flex-direction:column;gap:10px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}
+.mt8{margin-top:8px}.mt10{margin-top:10px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.muted{color:var(--muted)}.accent{color:var(--accent)}.accent2{color:var(--accent2)}
+.small{font-size:12px}.xsmall{font-size:11px}.bold{font-weight:700}
+.ml-auto{margin-left:auto}
+
+/* TABS */
+.tab{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s}
+.tab-on{background:var(--accent);color:#111}.tab-off{background:transparent;color:var(--muted);border:1px solid var(--border)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:24px 16px;overflow-y:auto}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:600px;padding:26px;margin:auto}
+
+/* TOPBAR */
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:8px;height:52px;position:sticky;top:0;z-index:100}
+.crumb{font-size:13px;cursor:pointer;color:var(--info);text-decoration:underline}
+.crumb-cur{font-size:13px;color:var(--text);font-weight:600}
+.sep{color:var(--border);margin:0 4px}
+
+/* PROGRESS */
+.prog-bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s}
+
+/* ARG HEADER */
+.arg-hdr{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-radius:10px 10px 0 0;border-left:3px solid var(--accent);border:1px solid var(--border);border-bottom:none;flex-wrap:wrap}
+.arg-body{border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:20px}
+
+/* CP ROW */
+.cp-row{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap;background:var(--card)}
+.cp-row+.cp-row{border-top:1px solid var(--border)}
+.esito-btn{padding:3px 8px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--muted);transition:all .15s}
+
+/* FILE CHIP */
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px 3px 8px;font-size:11px;cursor:pointer}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fade{animation:fadeIn .2s ease both}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <span id="logo" style="font-weight:800;font-size:15px;color:var(--accent);cursor:pointer;flex-shrink:0">🏗 CANTIERE</span>
+  <span id="breadcrumb"></span>
+  <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="today"></span>
+</div>
+<div id="app" style="max-width:960px;margin:0 auto;padding:24px 16px"></div>
+
+<!-- MODAL CONTAINER (root level) -->
+<div id="modal-root"></div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const KEY = 'cantiere_v5';
+let DB = { moduli: [], checkLists: [] };
+let VIEW = 'home'; // home | nuovo-mod | mod-detail | nuova-cl | cl-detail | cp-detail | report
+let SEL = { modId: null, clId: null, argId: null, cpId: null };
+let HOME_TAB = 'cl';
+let HOME_FILTER = 'tutte';
+
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return null; } };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch {} };
+
+// ─── BACKUP / RIPRISTINO ────────────────────────────────────────────────────────
+const exportDB = () => {
+  const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `backup-cantiere-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+const importDB = (file) => {
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      if (!data || !Array.isArray(data.moduli) || !Array.isArray(data.checkLists)) { alert('File di backup non valido.'); return; }
+      if (!confirm('Questo sostituirà i dati attuali con quelli del backup. Continuare?')) return;
+      DB = data; save(); render();
+      alert('Backup ripristinato con successo!');
+    } catch (e) { alert('File non valido o danneggiato.'); }
+  };
+  r.readAsText(file);
+};
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const uid = () => Math.random().toString(36).slice(2, 9);
+const oggi = () => new Date().toLocaleDateString('it-IT');
+const EC = { OK: 'var(--accent2)', NO: 'var(--danger)', 'N/A': 'var(--muted)', '—': 'var(--muted)' };
+const EH = { OK: '1a7a4a', NO: 'c0392b', 'N/A': '777777', '—': 'aaaaaa' };
+const EK = { OK: 'b-ok', NO: 'b-no', 'N/A': 'b-na', '—': 'b-na' };
+const ESITI = ['—', 'OK', 'NO', 'N/A'];
+const xe = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const fmtSize = b => b < 1024 ? b + 'B' : b < 1048576 ? (b / 1024).toFixed(0) + 'KB' : (b / 1048576).toFixed(1) + 'MB';
+const daysBetween = (d1, d2) => {
+  const p = s => { if (!s) return null; const [d, m, y] = s.split('/'); return new Date(+y, m - 1, +d); };
+  const a = p(d1), b = p(d2);
+  if (!a || !b || isNaN(a) || isNaN(b)) return null;
+  return Math.round((b - a) / 864e5);
+};
+const readFile = f => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res({ name: f.name, type: f.type, size: f.size, data: r.result });
+  r.onerror = rej; r.readAsDataURL(f);
+});
+
+// ─── FACTORY ──────────────────────────────────────────────────────────────────
+const newModulo = m => ({ id: uid(), matricola: m.matricola || '', titolo: m.titolo || '', edizione: m.edizione || '1', revisione: m.revisione || '0', denominazione: m.denominazione || '', argomenti: [], creato: oggi() });
+const newArgomento = t => ({ id: uid(), titolo: t, points: [] });
+const newCP = (n, point) => ({ id: uid(), n, point, esito: '—', note: '', allegati: [], nc: null, segnalazione: null, anomalie: [] });
+const newCheckList = (mod, meta) => ({
+  id: uid(), moduloId: mod.id, moduloTitolo: mod.titolo, moduloMatricola: mod.matricola,
+  ambito: meta.ambito || '', oggetto: meta.oggetto || '', postazione: meta.postazione || '',
+  persona: meta.persona || '', data: oggi(), esito: '—', chiusa: false,
+  personale: [],
+  argomenti: mod.argomenti.map(a => ({ id: uid(), titolo: a.titolo, personaleId: null, checkPoints: a.points.map((pt, i) => newCP(i + 1, pt.testo)) }))
+});
+const newNC = n => ({ numero: `NC-${String(n).padStart(3, '0')}-${Date.now().toString(36).toUpperCase()}`, dataApertura: oggi(), descrizione: '', causa: '', azioneCorrettiva: '', responsabile: '', dataChiusura: '', dataChiusuraEff: '', giorniPrevisti: '', giorniEffettivi: '', stato: 'Aperta' });
+const newSeg = n => ({ numero: `SEG-${String(n).padStart(3, '0')}-${Date.now().toString(36).toUpperCase()}`, dataApertura: oggi(), descrizione: '', priorita: 'Media', responsabile: '', dataChiusura: '', stato: 'Aperta' });
+const newAnom = () => ({ id: uid(), anomalia: '', azioneCorrettiva: '', minuti: 0, stato: 'Aperta' });
+
+// ─── GETTERS ──────────────────────────────────────────────────────────────────
+const getMod = () => DB.moduli.find(m => m.id === SEL.modId);
+const getCL = () => DB.checkLists.find(c => c.id === SEL.clId);
+const getArg = () => { const cl = getCL(); return cl ? cl.argomenti.find(a => a.id === SEL.argId) : null; };
+const getCP = () => { const arg = getArg(); return arg ? arg.checkPoints.find(p => p.id === SEL.cpId) : null; };
+
+// ─── NAVIGATE ─────────────────────────────────────────────────────────────────
+const go = (view, sel = {}) => { VIEW = view; Object.assign(SEL, sel); render(); };
+
+// ─── DOM HELPERS ──────────────────────────────────────────────────────────────
+const el = (tag, attrs = {}, ...children) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'className') e.className = v;
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) { if (c == null || c === false) continue; e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); }
+  return e;
+};
+const div = (attrs, ...ch) => el('div', attrs, ...ch);
+const span = (attrs, ...ch) => el('span', attrs, ...ch);
+const btn = (cls, text, onClick) => el('button', { className: 'btn ' + cls, onClick }, text);
+const input = (attrs) => el('input', attrs);
+const textarea = (attrs) => el('textarea', attrs);
+const fieldGroup = (labelText, inp) => {
+  const wrapper = div({});
+  wrapper.appendChild(el('label', {}, labelText));
+  wrapper.appendChild(inp);
+  return wrapper;
+};
+const badge = (cls, text) => span({ className: 'badge ' + cls }, text);
+const iconBtn = (cls, text, onClick) => el('button', { className: 'icon-btn ' + (cls || ''), onClick }, text);
+
+// ─── TOPBAR & BREADCRUMB ──────────────────────────────────────────────────────
+const renderTopbar = () => {
+  document.getElementById('today').textContent = new Date().toLocaleDateString('it-IT');
+  const bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  const add = (text, fn) => {
+    if (bc.children.length > 0) bc.appendChild(span({ className: 'sep' }, '›'));
+    if (fn) { const a = span({ className: 'crumb', onClick: fn }, text); bc.appendChild(a); }
+    else bc.appendChild(span({ className: 'crumb-cur' }, text));
+  };
+  if (VIEW !== 'home') add('Home', () => go('home'));
+  if (['mod-detail', 'nuovo-mod'].includes(VIEW)) add(getMod()?.titolo || 'Modulo', null);
+  if (['cl-detail', 'nuova-cl', 'cp-detail', 'report'].includes(VIEW)) {
+    const cl = getCL();
+    if (cl) { add(cl.moduloTitolo, null); add(`${cl.postazione} — ${cl.data}`, VIEW === 'cp-detail' || VIEW === 'report' ? () => go('cl-detail') : null); }
+  }
+  if (VIEW === 'cp-detail') { const arg = getArg(); const cp = getCP(); if (arg && cp) add(`${arg.titolo} · Pt.${cp.n}`, null); }
+  if (VIEW === 'report') add('Report', null);
+};
+
+document.getElementById('logo').addEventListener('click', () => go('home'));
+
+// ─── MAIN RENDER ──────────────────────────────────────────────────────────────
+const render = () => {
+  renderTopbar();
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  document.getElementById('modal-root').innerHTML = '';
+  const views = { home: renderHome, 'nuovo-mod': renderNuovoMod, 'mod-detail': renderModDetail, 'nuova-cl': renderNuovaCL, 'cl-detail': renderCLDetail, 'cp-detail': renderCPDetail, report: renderReport };
+  const v = views[VIEW];
+  if (v) app.appendChild(v());
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════════════════════════════════════════
+const renderHome = () => {
+  const root = div({ className: 'fade' });
+
+  // Backup / Ripristino
+  const backupRow = div({ className: 'flex mb16', style: { justifyContent: 'flex-end' } });
+  backupRow.appendChild(iconBtn('on-note', '⬇️ Salva backup', exportDB));
+  const importInput = input({ type: 'file', accept: '.json', style: { display: 'none' } });
+  importInput.addEventListener('change', e => { if (e.target.files[0]) { importDB(e.target.files[0]); e.target.value = ''; } });
+  backupRow.appendChild(iconBtn('', '⬆️ Ripristina', () => importInput.click()));
+  backupRow.appendChild(importInput);
+  root.appendChild(backupRow);
+
+  // Stats
+  const cls = DB.checkLists;
+  const stats = [
+    ['Totali', cls.length, 'var(--text)'],
+    ['Aperte', cls.filter(c => !c.chiusa).length, 'var(--accent)'],
+    ['Conformi', cls.filter(c => c.chiusa && c.esito === 'OK').length, 'var(--accent2)'],
+    ['Non conformi', cls.filter(c => c.chiusa && c.esito === 'NO').length, 'var(--danger)'],
+  ];
+  const statGrid = div({ className: 'grid4 mb20' });
+  stats.forEach(([l, v, c]) => {
+    statGrid.appendChild(div({ className: 'card' },
+      div({ style: { fontSize: '28px', fontWeight: '700', color: c } }, String(v)),
+      div({ className: 'small muted mt8' }, l)
+    ));
+  });
+  root.appendChild(statGrid);
+
+  // Tabs
+  const tabBar = div({ className: 'flex mb16' });
+  ['cl', 'moduli'].map(t => {
+    const label = t === 'cl' ? `📋 Check List (${DB.checkLists.length})` : `🗂 Moduli (${DB.moduli.length})`;
+    const b = el('button', { className: 'tab ' + (HOME_TAB === t ? 'tab-on' : 'tab-off'), onClick: () => { HOME_TAB = t; render(); } }, label);
+    tabBar.appendChild(b);
+  });
+  root.appendChild(tabBar);
+
+  if (HOME_TAB === 'cl') {
+    // Toolbar
+    const tb = div({ className: 'flex mb16' });
+    tb.appendChild(btn('btn-primary', '+ Nuova Check List', () => go('nuova-cl')));
+    const filters = div({ className: 'flex', style: { marginLeft: 'auto' } });
+    ['tutte', 'aperte', 'chiuse'].forEach(f => {
+      filters.appendChild(el('button', { className: 'btn btn-sm ' + (HOME_FILTER === f ? 'btn-primary' : 'btn-ghost'), onClick: () => { HOME_FILTER = f; render(); } }, f.charAt(0).toUpperCase() + f.slice(1)));
+    });
+    tb.appendChild(filters);
+    root.appendChild(tb);
+
+    const filtered = DB.checkLists.filter(c => HOME_FILTER === 'aperte' ? !c.chiusa : HOME_FILTER === 'chiuse' ? c.chiusa : true);
+    if (filtered.length === 0) {
+      root.appendChild(div({ style: { textAlign: 'center', color: 'var(--muted)', padding: '50px 0' } },
+        div({ style: { fontSize: '36px', marginBottom: '10px' } }, '📋'),
+        div({ style: { fontWeight: '700', marginBottom: '6px' } }, 'Nessuna check list'),
+        div({ className: 'small' }, DB.moduli.length === 0 ? 'Prima crea un Modulo dalla tab Moduli' : 'Clicca + Nuova Check List')
+      ));
+    } else {
+      const list = div({ className: 'flex-col' });
+      filtered.forEach(c => list.appendChild(renderCLCard(c)));
+      root.appendChild(list);
+    }
+  } else {
+    root.appendChild(div({ className: 'mb16' }, btn('btn-primary', '+ Nuovo Modulo', () => go('nuovo-mod'))));
+    if (DB.moduli.length === 0) {
+      root.appendChild(div({ style: { textAlign: 'center', color: 'var(--muted)', padding: '50px 0' } },
+        div({ style: { fontSize: '36px', marginBottom: '10px' } }, '🗂'),
+        div({ style: { fontWeight: '700', marginBottom: '6px' } }, 'Nessun modulo'),
+        div({ className: 'small' }, 'Crea un Modulo con Argomenti e Punti di controllo')
+      ));
+    } else {
+      const list = div({ className: 'flex-col' });
+      DB.moduli.forEach(m => list.appendChild(renderModCard(m)));
+      root.appendChild(list);
+    }
+  }
+  return root;
+};
+
+const renderCLCard = cl => {
+  const allCP = cl.argomenti.flatMap(a => a.checkPoints);
+  const done = allCP.filter(p => p.esito !== '—').length;
+  const pct = allCP.length ? Math.round(done / allCP.length * 100) : 0;
+  const ncO = allCP.filter(p => p.nc && p.nc.stato !== 'Chiusa').length;
+  const anO = allCP.reduce((s, p) => s + (p.anomalie || []).filter(a => a.stato === 'Aperta').length, 0);
+  const card = div({ className: 'card', style: { display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', transition: 'border-color .2s' } });
+  card.addEventListener('mouseenter', () => card.style.borderColor = 'var(--accent)');
+  card.addEventListener('mouseleave', () => card.style.borderColor = 'var(--border)');
+  card.addEventListener('click', () => go('cl-detail', { clId: cl.id }));
+
+  const info = div({ style: { flex: '1' } });
+  const row1 = div({ className: 'flex mb8' });
+  row1.appendChild(span({ style: { fontWeight: '700', fontSize: '14px' } }, cl.moduloTitolo));
+  row1.appendChild(span({ className: 'xsmall muted' }, cl.moduloMatricola));
+  row1.appendChild(cl.chiusa ? badge(cl.esito === 'OK' ? 'b-ok' : 'b-no', cl.esito) : badge('b-wip', 'In corso'));
+  if (ncO > 0) row1.appendChild(badge('b-nc', `📋 ${ncO} NC`));
+  if (anO > 0) row1.appendChild(badge('b-no', `⚠ ${anO}`));
+  info.appendChild(row1);
+  const row2 = div({ className: 'flex small muted mb8' });
+  [`📍 ${cl.postazione || '—'}`, `🔍 ${cl.ambito || '—'}`, `👤 ${cl.persona || '—'}`, `📅 ${cl.data}`].forEach(t => row2.appendChild(span({}, t)));
+  info.appendChild(row2);
+  const bar = div({ className: 'prog-bar' });
+  bar.appendChild(div({ className: 'prog-fill', style: { width: pct + '%', background: pct === 100 ? 'var(--accent2)' : 'var(--accent)' } }));
+  info.appendChild(bar);
+  info.appendChild(div({ className: 'xsmall muted mt8' }, `${cl.argomenti.length} argomenti · ${(cl.personale || []).length} personale · ${done}/${allCP.length} punti — ${pct}%`));
+  card.appendChild(info);
+  const delBtn = btn('btn-danger btn-sm', '✕', e => { e.stopPropagation(); if (confirm('Eliminare?')) { DB.checkLists = DB.checkLists.filter(c => c.id !== cl.id); save(); render(); } });
+  card.appendChild(delBtn);
+  return card;
+};
+
+const renderModCard = mod => {
+  const totPt = mod.argomenti.reduce((s, a) => s + a.points.length, 0);
+  const card = div({ className: 'card', style: { display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', transition: 'border-color .2s' } });
+  card.addEventListener('mouseenter', () => card.style.borderColor = 'var(--accent)');
+  card.addEventListener('mouseleave', () => card.style.borderColor = 'var(--border)');
+  card.addEventListener('click', () => go('mod-detail', { modId: mod.id }));
+  const info = div({ style: { flex: '1' } });
+  const row1 = div({ className: 'flex mb8' });
+  row1.appendChild(span({ style: { fontWeight: '700', fontSize: '14px' } }, mod.titolo));
+  row1.appendChild(span({ className: 'xsmall muted' }, mod.matricola));
+  row1.appendChild(span({ className: 'xsmall muted' }, `Ed.${mod.edizione} Rev.${mod.revisione}`));
+  info.appendChild(row1);
+  info.appendChild(div({ className: 'small muted' }, `${mod.argomenti.length} argomenti · ${totPt} punti · Creato ${mod.creato}`));
+  card.appendChild(info);
+  const dupBtn = btn('btn-ghost btn-sm', '⧉ Duplica', e => {
+    e.stopPropagation();
+    const copy = newModulo({ titolo: mod.titolo + ' (copia)', matricola: mod.matricola, edizione: mod.edizione, revisione: mod.revisione, denominazione: mod.denominazione });
+    copy.argomenti = mod.argomenti.map(a => ({ id: uid(), titolo: a.titolo, points: a.points.map(p => ({ id: uid(), n: p.n, testo: p.testo })) }));
+    DB.moduli.unshift(copy); save(); render();
+  });
+  card.appendChild(dupBtn);
+  const delBtn = btn('btn-danger btn-sm', '✕', e => { e.stopPropagation(); if (confirm('Eliminare?')) { DB.moduli = DB.moduli.filter(m => m.id !== mod.id); save(); render(); } });
+  card.appendChild(delBtn);
+  return card;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NUOVO MODULO
+// ══════════════════════════════════════════════════════════════════════════════
+const renderNuovoMod = () => {
+  const root = div({ className: 'fade', style: { maxWidth: '560px', margin: '0 auto' } });
+  const card = div({ className: 'card' });
+  card.appendChild(el('h2', { style: { marginBottom: '20px' } }, 'Nuovo Modulo di Controllo'));
+  const f = { titolo: '', matricola: '', edizione: '1', revisione: '0', denominazione: '' };
+  const fields = div({ className: 'flex-col' });
+  // ── Copia da modulo esistente (opzionale) ──
+  let copiaSrcId = '';
+  if (DB.moduli.length > 0) {
+    const copySel = el('select');
+    copySel.appendChild(el('option', { value: '' }, '— Nessuno (parti da modulo vuoto) —'));
+    DB.moduli.forEach(m => copySel.appendChild(el('option', { value: m.id }, `${m.titolo}${m.matricola ? ' — ' + m.matricola : ''} (${m.argomenti.reduce((s, a) => s + a.points.length, 0)} punti)`)));
+    copySel.addEventListener('change', e => copiaSrcId = e.target.value);
+    fields.appendChild(fieldGroup('📋 Copia argomenti e punti da (opzionale)', copySel));
+    fields.appendChild(div({ className: 'xsmall muted', style: { marginTop: '-4px' } }, 'Se scegli un modulo, ne copio tutti gli argomenti e i punti: poi modifichi solo ciò che serve.'));
+  }
+  const mkInp = (lbl, key, ph) => { const i = input({ placeholder: ph || '', value: f[key] }); i.addEventListener('input', e => f[key] = e.target.value); fields.appendChild(fieldGroup(lbl, i)); };
+  mkInp('Titolo *', 'titolo', 'es. Audit Qualità Saldatura');
+  mkInp('Matricola', 'matricola', 'es. MOD-001');
+  const g2 = div({ className: 'grid2' });
+  const iEd = input({ value: '1' }); iEd.addEventListener('input', e => f.edizione = e.target.value);
+  const iRev = input({ value: '0' }); iRev.addEventListener('input', e => f.revisione = e.target.value);
+  g2.appendChild(fieldGroup('Edizione', iEd)); g2.appendChild(fieldGroup('Revisione', iRev));
+  fields.appendChild(g2);
+  mkInp('Denominazione / Emittente', 'denominazione', 'es. Ufficio Qualità');
+  card.appendChild(fields);
+  const btns = div({ className: 'flex mt20' });
+  btns.appendChild(btn('btn-primary', 'Crea Modulo →', () => {
+    if (!f.titolo.trim()) { alert('Inserisci il titolo'); return; }
+    const m = newModulo(f);
+    if (copiaSrcId) {
+      const src = DB.moduli.find(x => x.id === copiaSrcId);
+      if (src) m.argomenti = src.argomenti.map(a => ({ id: uid(), titolo: a.titolo, points: a.points.map(p => ({ id: uid(), n: p.n, testo: p.testo })) }));
+    }
+    DB.moduli.unshift(m); save(); go('mod-detail', { modId: m.id });
+  }));
+  btns.appendChild(btn('btn-ghost', 'Annulla', () => go('home')));
+  card.appendChild(btns);
+  root.appendChild(card);
+  return root;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MODULO DETAIL
+// ══════════════════════════════════════════════════════════════════════════════
+const renderModDetail = () => {
+  const mod = getMod(); if (!mod) return go('home'), div({});
+  const root = div({ className: 'fade' });
+  const totPt = mod.argomenti.reduce((s, a) => s + a.points.length, 0);
+
+  // Header
+  const hdr = div({ className: 'card mb16' });
+  const hdrRow = div({ className: 'flex', style: { justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' } });
+  const hdrLeft = div({});
+  hdrLeft.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '4px' } }, 'Modulo di Controllo'));
+  hdrLeft.appendChild(el('h2', { style: { marginBottom: '6px' } }, mod.titolo));
+  hdrLeft.appendChild(div({ className: 'flex small muted' }, ...[mod.matricola || '—', `Ed.${mod.edizione} Rev.${mod.revisione}`, mod.denominazione, `${mod.argomenti.length} arg · ${totPt} punti`].filter(Boolean).map(t => span({}, t))));
+  hdrRow.appendChild(hdrLeft);
+  hdrRow.appendChild(btn('btn-success', '▶ Lancia Check List', () => showLanciaModal(mod)));
+  hdr.appendChild(hdrRow);
+  root.appendChild(hdr);
+
+  // Dati modulo edit
+  const dati = div({ className: 'card mb16' });
+  dati.appendChild(div({ className: 'xsmall muted bold mb16', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, 'Dati Modulo'));
+  const g = div({ className: 'grid2' });
+  const mkF = (lbl, key) => { const i = input({ value: mod[key] }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
+  mkF('Titolo', 'titolo'); mkF('Matricola', 'matricola'); mkF('Edizione', 'edizione'); mkF('Revisione', 'revisione'); mkF('Denominazione', 'denominazione');
+  dati.appendChild(g);
+  root.appendChild(dati);
+
+  // Argomenti
+  const argCard = div({ className: 'card' });
+  argCard.appendChild(div({ className: 'xsmall muted bold mb16', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, 'Argomenti e Punti di Controllo'));
+  if (mod.argomenti.length === 0) {
+    argCard.appendChild(div({ className: 'surface small muted mb16' }, 'Aggiungi un argomento (es. "Gestione Approvvigionamenti") poi i punti di controllo specifici.'));
+  }
+  mod.argomenti.forEach((arg, ai) => argCard.appendChild(renderArgEditor(mod, arg, ai)));
+
+  // Add argomento
+  const addArgRow = div({ style: { marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--border)' } });
+  addArgRow.appendChild(div({ className: 'xsmall accent bold mb8', style: { textTransform: 'uppercase', letterSpacing: '.06em' } }, '+ Nuovo Argomento'));
+  const addRow = div({ className: 'flex' });
+  const newArgInp = input({ placeholder: 'es. Gestione Approvvigionamenti, Sicurezza, Qualità Saldatura...' });
+  newArgInp.style.flex = '1';
+  const addArgBtn = btn('btn-primary btn-sm', '+ Aggiungi', () => {
+    const t = newArgInp.value.trim(); if (!t) return;
+    mod.argomenti.push(newArgomento(t)); save(); render();
+  });
+  newArgInp.addEventListener('keydown', e => { if (e.key === 'Enter') addArgBtn.click(); });
+  addRow.appendChild(newArgInp); addRow.appendChild(addArgBtn);
+  addArgRow.appendChild(addRow);
+  argCard.appendChild(addArgRow);
+  root.appendChild(argCard);
+  return root;
+};
+
+const renderArgEditor = (mod, arg, ai) => {
+  const wrapper = div({ style: { marginBottom: '12px', border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden' } });
+  const hdr = div({ style: { background: 'var(--surface)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '3px solid var(--accent)' } });
+  hdr.appendChild(span({ style: { fontSize: '11px', color: 'var(--accent)', fontWeight: '700', minWidth: '22px' } }, String(ai + 1).padStart(2, '0')));
+  const titleSpan = span({ style: { flex: '1', fontWeight: '700', fontSize: '14px', cursor: 'text' } }, arg.titolo);
+  let editing = false;
+  titleSpan.addEventListener('click', () => {
+    if (editing) return; editing = true;
+    const inp = input({ value: arg.titolo, style: { flex: '1', fontWeight: '700', fontSize: '14px' } });
+    titleSpan.replaceWith(inp); inp.focus();
+    const done = () => { arg.titolo = inp.value; save(); render(); };
+    inp.addEventListener('blur', done);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') done(); });
+  });
+  hdr.appendChild(titleSpan);
+  hdr.appendChild(span({ className: 'xsmall muted' }, `${arg.points.length} punti`));
+  hdr.appendChild(iconBtn('', '🗑', () => { if (confirm(`Eliminare "${arg.titolo}"?`)) { mod.argomenti = mod.argomenti.filter(a => a.id !== arg.id); save(); render(); } }));
+  wrapper.appendChild(hdr);
+
+  const body = div({ style: { padding: '12px 14px' } });
+  if (arg.points.length === 0) body.appendChild(div({ className: 'small muted mb8' }, 'Nessun punto.'));
+  arg.points.forEach((pt, i) => {
+    const row = div({ style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 10px', background: 'var(--bg)', borderRadius: '7px', marginBottom: '6px' } });
+    row.appendChild(span({ className: 'xsmall muted', style: { minWidth: '22px' } }, String(i + 1).padStart(2, '0')));
+    const ptSpan = span({ style: { flex: '1', fontSize: '13px', cursor: 'text', lineHeight: '1.4' } }, pt.testo);
+    ptSpan.addEventListener('click', () => {
+      const inp = input({ value: pt.testo, style: { flex: '1', fontSize: '13px' } });
+      ptSpan.replaceWith(inp); inp.focus();
+      const done = () => { pt.testo = inp.value; save(); render(); };
+      inp.addEventListener('blur', done);
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') done(); });
+    });
+    row.appendChild(ptSpan);
+    row.appendChild(iconBtn('', '✕', () => { arg.points = arg.points.filter(p => p.id !== pt.id).map((p, i) => ({ ...p, n: i + 1 })); save(); render(); }));
+    body.appendChild(row);
+  });
+  const addRow = div({ className: 'flex mt8' });
+  const ptInp = input({ placeholder: 'Nuovo punto di controllo...', style: { flex: '1', fontSize: '13px' } });
+  const addPtBtn = btn('btn-primary btn-sm', '+ Punto', () => {
+    const t = ptInp.value.trim(); if (!t) return;
+    arg.points.push({ id: uid(), n: arg.points.length + 1, testo: t }); save(); render();
+  });
+  ptInp.addEventListener('keydown', e => { if (e.key === 'Enter') addPtBtn.click(); });
+  addRow.appendChild(ptInp); addRow.appendChild(addPtBtn);
+  body.appendChild(addRow);
+  wrapper.appendChild(body);
+  return wrapper;
+};
+
+// ── LANCIA MODAL ──────────────────────────────────────────────────────────────
+const showLanciaModal = (mod) => {
+  const totPt = mod.argomenti.reduce((s, a) => s + a.points.length, 0);
+  const f = { ambito: '', oggetto: '', postazione: '', persona: '' };
+  const m = div({ className: 'modal fade' });
+  m.appendChild(div({ style: { fontSize: '11px', color: 'var(--accent2)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '4px' } }, 'Lancia Check List'));
+  m.appendChild(el('h3', { style: { marginBottom: '4px' } }, mod.titolo));
+  m.appendChild(div({ className: 'small muted mb16' }, `${mod.argomenti.length} argomenti · ${totPt} punti`));
+  const fields = div({ className: 'flex-col' });
+  const mkInp = (lbl, key, ph) => { const i = input({ placeholder: ph || '' }); i.addEventListener('input', e => f[key] = e.target.value); fields.appendChild(fieldGroup(lbl, i)); };
+  mkInp('Postazione / Cantiere *', 'postazione', 'es. Cantiere Via Roma 12');
+  mkInp('Ambito', 'ambito', 'es. Saldatura, Collaudo...');
+  mkInp('Oggetto del Controllo', 'oggetto', 'Descrizione sintetica');
+  mkInp('Auditor / Verificatore', 'persona', 'Nome Cognome');
+  m.appendChild(fields);
+  const btns = div({ className: 'flex mt20' });
+  btns.appendChild(btn('btn-success', '▶ Avvia', () => {
+    if (!f.postazione.trim()) { alert('Inserisci la postazione'); return; }
+    const cl = newCheckList(mod, f); DB.checkLists.unshift(cl); save();
+    overlay.remove(); go('cl-detail', { clId: cl.id });
+  }));
+  btns.appendChild(btn('btn-ghost', 'Annulla', () => overlay.remove()));
+  m.appendChild(btns);
+  const overlay = div({ className: 'overlay', onClick: e => { if (e.target === overlay) overlay.remove(); } }, m);
+  document.getElementById('modal-root').appendChild(overlay);
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NUOVA CL
+// ══════════════════════════════════════════════════════════════════════════════
+const renderNuovaCL = () => {
+  if (DB.moduli.length === 0) {
+    const root = div({ className: 'fade', style: { textAlign: 'center', padding: '60px 0' } });
+    root.appendChild(div({ style: { fontSize: '36px', marginBottom: '12px' } }, '🗂'));
+    root.appendChild(div({ style: { fontWeight: '700', marginBottom: '8px' } }, 'Nessun modulo disponibile'));
+    root.appendChild(div({ className: 'small muted mb20' }, 'Prima crea un Modulo dalla tab Moduli'));
+    root.appendChild(btn('btn-ghost', '← Indietro', () => go('home')));
+    return root;
+  }
+  const root = div({ className: 'fade', style: { maxWidth: '560px', margin: '0 auto' } });
+  const card = div({ className: 'card' });
+  card.appendChild(el('h2', { style: { marginBottom: '20px' } }, 'Nuova Check List'));
+  let selMod = DB.moduli[0].id;
+  const f = { ambito: '', oggetto: '', postazione: '', persona: '' };
+  const fields = div({ className: 'flex-col' });
+  const modSel = el('select');
+  DB.moduli.forEach(m => { const o = el('option', { value: m.id }, `${m.titolo} — ${m.matricola} Ed.${m.edizione} Rev.${m.revisione}`); modSel.appendChild(o); });
+  modSel.addEventListener('change', e => selMod = e.target.value);
+  fields.appendChild(fieldGroup('Modulo *', modSel));
+  const mkInp = (lbl, key, ph) => { const i = input({ placeholder: ph || '' }); i.addEventListener('input', e => f[key] = e.target.value); fields.appendChild(fieldGroup(lbl, i)); };
+  mkInp('Postazione / Cantiere *', 'postazione', 'es. Cantiere Via Roma 12');
+  mkInp('Ambito', 'ambito', 'es. Saldatura, Collaudo...');
+  mkInp('Oggetto', 'oggetto', 'Descrizione sintetica');
+  mkInp('Auditor / Verificatore', 'persona', 'Nome Cognome');
+  card.appendChild(fields);
+  const btns = div({ className: 'flex mt20' });
+  btns.appendChild(btn('btn-primary', 'Crea →', () => {
+    if (!f.postazione.trim()) { alert('Inserisci la postazione'); return; }
+    const mod = DB.moduli.find(m => m.id === selMod); if (!mod) return;
+    const cl = newCheckList(mod, f); DB.checkLists.unshift(cl); save(); go('cl-detail', { clId: cl.id });
+  }));
+  btns.appendChild(btn('btn-ghost', 'Annulla', () => go('home')));
+  card.appendChild(btns);
+  root.appendChild(card);
+  return root;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CL DETAIL
+// ══════════════════════════════════════════════════════════════════════════════
+const renderCLDetail = () => {
+  const cl = getCL(); if (!cl) return go('home'), div({});
+  const root = div({ className: 'fade' });
+  const allCP = cl.argomenti.flatMap(a => a.checkPoints);
+  const done = allCP.filter(p => p.esito !== '—').length;
+  const pct = allCP.length ? Math.round(done / allCP.length * 100) : 0;
+  const ncO = allCP.filter(p => p.nc && p.nc.stato !== 'Chiusa').length;
+  const personale = cl.personale || [];
+
+  // Header
+  const hdr = div({ className: 'card mb16' });
+  const hdrRow = div({ style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' } });
+  const hdrLeft = div({});
+  const r1 = div({ className: 'flex mb8' });
+  r1.appendChild(el('h2', {}, cl.moduloTitolo));
+  r1.appendChild(span({ className: 'xsmall muted' }, cl.moduloMatricola));
+  r1.appendChild(cl.chiusa ? badge(cl.esito === 'OK' ? 'b-ok' : 'b-no', cl.esito === 'OK' ? '✓ CONFORME' : '✗ NON CONFORME') : badge('b-wip', 'In corso'));
+  if (ncO > 0) r1.appendChild(badge('b-nc', `📋 ${ncO} NC`));
+  hdrLeft.appendChild(r1);
+  const r2 = div({ className: 'flex small muted' });
+  [`📍 ${cl.postazione}`, `🔍 ${cl.ambito || '—'}`, `👤 ${cl.persona || '—'}`, `📅 ${cl.data}`, cl.oggetto ? `📌 ${cl.oggetto}` : null].filter(Boolean).forEach(t => r2.appendChild(span({}, t)));
+  hdrLeft.appendChild(r2);
+  hdrRow.appendChild(hdrLeft);
+  const hdrBtns = div({ className: 'flex' });
+  hdrBtns.appendChild(btn('btn-ghost btn-sm', '📄 Report', () => go('report')));
+  if (!cl.chiusa) hdrBtns.appendChild(btn('btn-success btn-sm', '✓ Concludi Audit', () => showCloseModal(cl)));
+  hdrRow.appendChild(hdrBtns);
+  hdr.appendChild(hdrRow);
+  const barRow = div({ style: { marginTop: '14px' } });
+  const barInfo = div({ className: 'flex small muted mb8' });
+  barInfo.appendChild(span({}, `${cl.argomenti.length} argomenti · ${done}/${allCP.length} punti verificati`));
+  barInfo.appendChild(span({ className: 'ml-auto', style: { fontWeight: '700', color: pct === 100 ? 'var(--accent2)' : 'var(--accent)' } }, pct + '%'));
+  barRow.appendChild(barInfo);
+  const bar = div({ className: 'prog-bar' });
+  bar.appendChild(div({ className: 'prog-fill', style: { width: pct + '%', background: pct === 100 ? 'var(--accent2)' : 'var(--accent)' } }));
+  barRow.appendChild(bar);
+  hdr.appendChild(barRow);
+  root.appendChild(hdr);
+
+  // ── PERSONALE AUDIT ──
+  const persCard = div({ className: 'card mb20' });
+  const persHdr = div({ style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' } });
+  const persTitle = div({});
+  persTitle.appendChild(div({ className: 'xsmall muted bold', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, '👥 Personale Audit'));
+  persTitle.appendChild(div({ className: 'xsmall muted mt8' }, 'Aggiungi le persone intervistate e assegnale agli argomenti'));
+  persHdr.appendChild(persTitle);
+  if (!cl.chiusa) {
+    persHdr.appendChild(btn('btn-primary btn-sm', '+ Aggiungi Persona', () => {
+      cl.personale = cl.personale || []; cl.personale.push({ id: uid(), nominativo: '', mansione: '' }); save(); render();
+    }));
+  }
+  persCard.appendChild(persHdr);
+  if (!personale.length) {
+    persCard.appendChild(div({ className: 'small muted' }, 'Nessun membro del personale aggiunto.'));
+  } else {
+    const persList = div({ className: 'flex-col' });
+    personale.forEach(p => {
+      const row = div({ style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'var(--surface)', borderRadius: '8px' } });
+      row.appendChild(span({ style: { fontSize: '18px' } }, '👤'));
+      if (!cl.chiusa) {
+        const iNom = input({ placeholder: 'Nominativo', value: p.nominativo, style: { flex: '2', fontSize: '13px' } }); iNom.addEventListener('input', e => { p.nominativo = e.target.value; save(); });
+        const iMan = input({ placeholder: 'Mansione / Ruolo', value: p.mansione, style: { flex: '2', fontSize: '13px' } }); iMan.addEventListener('input', e => { p.mansione = e.target.value; save(); });
+        row.appendChild(iNom); row.appendChild(iMan);
+        row.appendChild(iconBtn('', '✕', () => { cl.personale = cl.personale.filter(x => x.id !== p.id); cl.argomenti.forEach(a => { if (a.personaleId === p.id) a.personaleId = null; }); save(); render(); }));
+      } else {
+        row.appendChild(span({ style: { flex: '2', fontSize: '13px', fontWeight: '600' } }, p.nominativo || '—'));
+        row.appendChild(span({ style: { flex: '2', fontSize: '12px' }, className: 'muted' }, p.mansione || '—'));
+      }
+      persList.appendChild(row);
+    });
+    persCard.appendChild(persList);
+  }
+  root.appendChild(persCard);
+
+  // ── ARGOMENTI ──
+  cl.argomenti.forEach((arg, ai) => {
+    const argDone = arg.checkPoints.filter(p => p.esito !== '—').length;
+    const argPct = arg.checkPoints.length ? Math.round(argDone / arg.checkPoints.length * 100) : 0;
+    const argNC = arg.checkPoints.filter(p => p.nc && p.nc.stato !== 'Chiusa').length;
+    const assegnato = personale.find(p => p.id === arg.personaleId);
+
+    const argHdr = div({ className: 'arg-hdr', style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: 'var(--surface)', borderRadius: '10px 10px 0 0', borderLeft: '3px solid var(--accent)', border: '1px solid var(--border)', borderBottom: 'none', flexWrap: 'wrap' } });
+    argHdr.appendChild(span({ style: { fontSize: '11px', color: 'var(--accent)', fontWeight: '700', minWidth: '22px' } }, String(ai + 1).padStart(2, '0')));
+    argHdr.appendChild(span({ style: { fontWeight: '700', fontSize: '15px', flex: '1' } }, arg.titolo));
+    if (personale.length > 0 && !cl.chiusa) {
+      const sel = el('select', { style: { maxWidth: '200px', fontSize: '12px', padding: '3px 8px', background: 'var(--card)' } });
+      sel.appendChild(el('option', { value: '' }, '— Persona intervistata —'));
+      personale.forEach(p => { const o = el('option', { value: p.id }, `${p.nominativo}${p.mansione ? ` (${p.mansione})` : ''}`); if (arg.personaleId === p.id) o.selected = true; sel.appendChild(o); });
+      sel.addEventListener('change', e => { arg.personaleId = e.target.value || null; save(); render(); });
+      argHdr.appendChild(sel);
+    } else if (assegnato) {
+      argHdr.appendChild(span({ className: 'small', style: { color: 'var(--accent2)', fontWeight: '600' } }, `👤 ${assegnato.nominativo}`));
+    }
+    if (argNC > 0) argHdr.appendChild(badge('b-nc', `📋 ${argNC} NC`));
+    argHdr.appendChild(span({ className: 'xsmall muted' }, `${argDone}/${arg.checkPoints.length} · ${argPct}%`));
+
+    const argBody = div({ style: { border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 10px 10px', overflow: 'hidden', marginBottom: '20px' } });
+    arg.checkPoints.forEach((cp, ci) => argBody.appendChild(renderCPRow(cl, arg, cp, ci, ci === arg.checkPoints.length - 1)));
+
+    root.appendChild(argHdr);
+    root.appendChild(argBody);
+  });
+
+  return root;
+};
+
+const renderCPRow = (cl, arg, cp, idx, isLast) => {
+  const hasNC = !!cp.nc, hasSeg = !!cp.segnalazione, anomN = (cp.anomalie || []).length;
+  const ncScad = cp.nc?.dataChiusura ? daysBetween(oggi(), cp.nc.dataChiusura) : null;
+  const borderL = cp.esito !== '—' ? `3px solid ${EC[cp.esito]}` : '3px solid transparent';
+  const row = div({ style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', flexWrap: 'wrap', background: 'var(--card)', borderBottom: isLast ? 'none' : '1px solid var(--border)', borderLeft: borderL } });
+  row.appendChild(span({ className: 'xsmall muted', style: { minWidth: '22px' } }, String(idx + 1).padStart(2, '0')));
+  row.appendChild(span({ style: { flex: '1 1 200px', fontSize: '13.5px', lineHeight: '1.4' } }, cp.point));
+  const badges = div({ className: 'flex' });
+  if (hasNC) {
+    const ncb = badge('b-nc', `📋 ${cp.nc.stato}`);
+    if (cp.nc.dataChiusura && cp.nc.stato !== 'Chiusa' && ncScad != null) {
+      ncb.appendChild(span({ style: { marginLeft: '4px', fontSize: '10px', color: ncScad < 0 ? 'var(--danger)' : ncScad <= 3 ? 'var(--accent)' : 'inherit' } }, ncScad < 0 ? `⚠${Math.abs(ncScad)}gg fa` : `${ncScad}gg`));
+    }
+    badges.appendChild(ncb);
+  }
+  if (hasSeg) badges.appendChild(badge('b-seg', `🚩 ${cp.segnalazione.priorita}`));
+  if (anomN > 0) badges.appendChild(badge('b-no', `⚠ ${anomN}`));
+  if (cp.note?.trim()) badges.appendChild(span({ className: 'xsmall', style: { color: 'var(--accent2)' } }, '✎'));
+  if ((cp.allegati || []).length > 0) badges.appendChild(span({ className: 'xsmall accent' }, `📎${(cp.allegati || []).length}`));
+  row.appendChild(badges);
+  const esitoRow = div({ className: 'flex' });
+  if (!cl.chiusa) {
+    ESITI.forEach(e => {
+      const b = el('button', { className: 'esito-btn' }, e);
+      if (cp.esito === e) { b.style.background = e === 'OK' ? '#1a3d2e' : e === 'NO' ? '#3d1a1a' : e === 'N/A' ? '#2a2e3d' : 'var(--border)'; b.style.color = EC[e]; b.style.borderColor = EC[e]; }
+      b.addEventListener('click', () => { cp.esito = e; save(); render(); });
+      esitoRow.appendChild(b);
+    });
+  } else { esitoRow.appendChild(badge(EK[cp.esito], cp.esito)); }
+  row.appendChild(esitoRow);
+  row.appendChild(btn('btn-ghost btn-sm', 'Dettaglio →', () => go('cp-detail', { argId: arg.id, cpId: cp.id })));
+  return row;
+};
+
+const showCloseModal = cl => {
+  const allCP = cl.argomenti.flatMap(a => a.checkPoints);
+  const pending = allCP.filter(p => p.esito === '—').length;
+  const m = div({ className: 'modal fade' });
+  m.appendChild(div({ style: { fontSize: '32px', textAlign: 'center', marginBottom: '12px' } }, '📦'));
+  m.appendChild(el('h3', { style: { textAlign: 'center', marginBottom: '10px' } }, 'Concludi Audit'));
+  const info = div({ style: { borderRadius: '8px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px', textAlign: 'center' } });
+  if (pending > 0) { Object.assign(info.style, { background: '#3d2d0a', color: 'var(--accent)', border: '1px solid var(--accent)' }); info.textContent = `⚠ ${pending} punti non ancora valutati`; }
+  else { Object.assign(info.style, { background: '#1a3d2e', color: 'var(--accent2)', border: '1px solid var(--accent2)' }); info.textContent = '✓ Tutti i punti verificati'; }
+  m.appendChild(info);
+  m.appendChild(div({ className: 'small muted', style: { textAlign: 'center', marginBottom: '20px' } }, "L'audit verrà archiviato e non sarà più modificabile."));
+  const btns = div({ className: 'flex', style: { justifyContent: 'center' } });
+  btns.appendChild(btn('btn-success', '✓ Conferma', () => {
+    cl.chiusa = true; cl.esito = cl.argomenti.flatMap(a => a.checkPoints).every(p => p.esito === 'OK' || p.esito === 'N/A') ? 'OK' : 'NO';
+    save(); overlay.remove(); render();
+  }));
+  btns.appendChild(btn('btn-ghost', 'Annulla', () => overlay.remove()));
+  m.appendChild(btns);
+  const overlay = div({ className: 'overlay', onClick: e => { if (e.target === overlay) overlay.remove(); } }, m);
+  document.getElementById('modal-root').appendChild(overlay);
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CP DETAIL
+// ══════════════════════════════════════════════════════════════════════════════
+const renderCPDetail = () => {
+  const cl = getCL(), arg = getArg(), cp = getCP();
+  if (!cl || !arg || !cp) return go('cl-detail'), div({});
+  const disabled = cl.chiusa;
+  const personale = cl.personale || [];
+  const argPersona = personale.find(p => p.id === arg.personaleId);
+  const ncScad = cp.nc?.dataChiusura ? daysBetween(oggi(), cp.nc.dataChiusura) : null;
+  const anomalie = cp.anomalie || [];
+  let openPanel = null;
+
+  const root = div({ className: 'fade' });
+
+  // Header
+  const hdr = div({ className: 'card mb16' });
+  const topRow = div({ style: { display: 'flex', gap: '10px', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' } });
+  const left = div({ style: { flex: '1' } });
+  const tagRow = div({ className: 'flex mb12' });
+  tagRow.appendChild(div({ style: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--surface)', borderRadius: '6px', padding: '3px 10px', borderLeft: '2px solid var(--accent)', fontSize: '11px', color: 'var(--accent)', fontWeight: '700' } }, arg.titolo));
+  if (argPersona) tagRow.appendChild(div({ style: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--surface)', borderRadius: '6px', padding: '3px 10px', borderLeft: '2px solid var(--accent2)', fontSize: '11px', color: 'var(--accent2)' } }, `👤 ${argPersona.nominativo}${argPersona.mansione ? ` — ${argPersona.mansione}` : ''}`));
+  left.appendChild(tagRow);
+  left.appendChild(div({ className: 'xsmall muted mb8' }, `Punto ${String(cp.n).padStart(2, '0')} · ${cl.moduloTitolo} · ${cl.postazione}`));
+  left.appendChild(div({ style: { fontSize: '16px', fontWeight: '700', lineHeight: '1.4', marginBottom: '10px' } }, cp.point));
+  topRow.appendChild(left);
+  const esitoRow = div({ className: 'flex' });
+  if (!disabled) {
+    ESITI.forEach(e => {
+      const b = el('button', { className: 'esito-btn', style: { padding: '5px 12px', fontSize: '12px' } }, e);
+      if (cp.esito === e) { b.style.background = e === 'OK' ? '#1a3d2e' : e === 'NO' ? '#3d1a1a' : e === 'N/A' ? '#2a2e3d' : 'var(--border)'; b.style.color = EC[e]; b.style.outline = `1px solid ${EC[e]}`; }
+      b.addEventListener('click', () => { cp.esito = e; save(); render(); });
+      esitoRow.appendChild(b);
+    });
+  } else { esitoRow.appendChild(badge(EK[cp.esito], cp.esito)); }
+  topRow.appendChild(esitoRow);
+  hdr.appendChild(topRow);
+
+  // Action buttons
+  const actions = div({ className: 'flex mt12' });
+  const noteBtn = iconBtn(cp.note?.trim() ? 'on-note' : '', `✎ Note${cp.note?.trim() ? ' ●' : ''}`, () => togglePanel('note'));
+  const fileBtn = iconBtn((cp.allegati || []).length > 0 ? 'on-file' : '', `📎 Allegati${(cp.allegati || []).length > 0 ? ` (${(cp.allegati || []).length})` : ''}`, () => togglePanel('files'));
+  const ncBtnEl = iconBtn(cp.nc ? 'on-nc' : '', '', () => showNCModal(cl, arg, cp));
+  const ncBtnText = document.createTextNode(`📋 ${cp.nc ? 'NC: ' + cp.nc.stato : 'Apri NC'}`);
+  ncBtnEl.insertBefore(ncBtnText, ncBtnEl.firstChild);
+  if (cp.nc && ncScad != null && cp.nc.stato !== 'Chiusa') ncBtnEl.appendChild(span({ style: { marginLeft: '4px', fontSize: '10px', color: ncScad < 0 ? 'var(--danger)' : ncScad <= 3 ? 'var(--accent)' : 'var(--info)' } }, ncScad < 0 ? `⚠ scad.${Math.abs(ncScad)}gg fa` : `⏱ ${ncScad}gg`));
+  const segBtnEl = iconBtn(cp.segnalazione ? 'on-seg' : '', `🚩 ${cp.segnalazione ? 'Seg: ' + cp.segnalazione.priorita : 'Segnalazione'}`, () => showSegModal(cl, arg, cp));
+  actions.appendChild(noteBtn); actions.appendChild(fileBtn); actions.appendChild(ncBtnEl); actions.appendChild(segBtnEl);
+  if (!disabled) {
+    actions.appendChild(iconBtn('', '+ Anomalia', () => { cp.anomalie = cp.anomalie || []; cp.anomalie.push(newAnom()); save(); togglePanel('anomalie'); }));
+  }
+  if (anomalie.length > 0) actions.appendChild(iconBtn('on-anom', `⚠ Anomalie (${anomalie.length})`, () => togglePanel('anomalie')));
+  hdr.appendChild(actions);
+  root.appendChild(hdr);
+
+  // Panel container
+  const panelContainer = div({});
+  root.appendChild(panelContainer);
+
+  const togglePanel = (name) => {
+    openPanel = openPanel === name ? null : name;
+    panelContainer.innerHTML = '';
+    if (openPanel === 'note') panelContainer.appendChild(renderNotePanel(cp, disabled));
+    if (openPanel === 'files') panelContainer.appendChild(renderFilesPanel(cl, arg, cp, disabled));
+    if (openPanel === 'anomalie') panelContainer.appendChild(renderAnomaliePanel(cl, arg, cp, disabled));
+  };
+
+  return root;
+};
+
+const renderNotePanel = (cp, disabled) => {
+  const p = div({ className: 'panel' });
+  p.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.06em' } }, 'Note'));
+  const ta = textarea({ placeholder: 'Note / osservazioni...', style: { fontSize: '13px', minHeight: '80px' } }); ta.value = cp.note || '';
+  if (disabled) ta.disabled = true;
+  ta.addEventListener('input', e => { cp.note = e.target.value; save(); });
+  p.appendChild(ta);
+  return p;
+};
+
+const renderFilesPanel = (cl, arg, cp, disabled) => {
+  const p = div({ className: 'panel' });
+  const hdr = div({ className: 'flex mb12' });
+  hdr.appendChild(div({ className: 'xsmall muted bold', style: { textTransform: 'uppercase', letterSpacing: '.06em' } }, `Allegati (${(cp.allegati || []).length})`));
+  if (!disabled) {
+    const fileInput = input({ type: 'file', multiple: true, accept: 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip', style: { display: 'none' } });
+    fileInput.addEventListener('change', async e => {
+      for (const f of Array.from(e.target.files)) { const att = await readFile(f); cp.allegati = cp.allegati || []; cp.allegati.push(att); save(); }
+      e.target.value = ''; render();
+    });
+    const addBtn = btn('btn-primary btn-sm', '+ Allega', () => fileInput.click());
+    p.appendChild(fileInput);
+    hdr.appendChild(addBtn);
+  }
+  p.appendChild(hdr);
+  const allegati = cp.allegati || [];
+  if (allegati.length === 0) { p.appendChild(div({ className: 'small muted' }, 'Nessun allegato.')); return p; }
+  const chips = div({ className: 'flex mb8' });
+  allegati.forEach((a, i) => {
+    const icon = a.type?.startsWith('image/') ? '🖼' : a.type?.includes('pdf') ? '📄' : '📎';
+    const chip = div({ className: 'chip', onClick: () => { const link = document.createElement('a'); link.href = a.data; link.download = a.name; link.click(); } });
+    chip.appendChild(span({}, icon));
+    chip.appendChild(span({ style: { maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, a.name));
+    chip.appendChild(span({ className: 'xsmall muted' }, `(${fmtSize(a.size)})`));
+    if (!disabled) chip.appendChild(span({ style: { color: 'var(--danger)', fontWeight: '700', marginLeft: '4px', cursor: 'pointer' }, onClick: e => { e.stopPropagation(); cp.allegati.splice(i, 1); save(); render(); } }, '×'));
+    chips.appendChild(chip);
+  });
+  p.appendChild(chips);
+  const imgs = allegati.filter(a => a.type?.startsWith('image/'));
+  if (imgs.length > 0) {
+    const imgRow = div({ className: 'flex' });
+    imgs.forEach(a => {
+      const img = el('img', { src: a.data, alt: a.name, style: { width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border)', cursor: 'pointer' } });
+      img.addEventListener('click', () => { const link = document.createElement('a'); link.href = a.data; link.download = a.name; link.click(); });
+      imgRow.appendChild(img);
+    });
+    p.appendChild(imgRow);
+  }
+  return p;
+};
+
+const renderAnomaliePanel = (cl, arg, cp, disabled) => {
+  const anomalie = cp.anomalie || [];
+  const p = div({ className: 'panel' });
+  p.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.06em' } }, `Anomalie (${anomalie.length})`));
+  const list = div({ className: 'flex-col' });
+  anomalie.forEach((a, i) => {
+    const item = div({ style: { background: 'var(--surface)', borderRadius: '8px', padding: '14px', borderLeft: `3px solid ${a.stato === 'Chiusa' ? 'var(--accent2)' : 'var(--danger)'}` } });
+    const hdr = div({ className: 'flex mb8' });
+    hdr.appendChild(span({ className: 'xsmall muted' }, `#${i + 1}`));
+    hdr.appendChild(badge(a.stato === 'Chiusa' ? 'b-ok' : 'b-no', a.stato));
+    if (a.minuti > 0) hdr.appendChild(span({ className: 'xsmall muted' }, `⏱ ${a.minuti} min`));
+    if (!disabled) hdr.appendChild(btn('btn-sm ' + (a.stato === 'Chiusa' ? 'btn-ghost' : 'btn-success'), a.stato === 'Chiusa' ? 'Riapri' : 'Chiudi', () => { a.stato = a.stato === 'Chiusa' ? 'Aperta' : 'Chiusa'; save(); render(); }));
+    item.appendChild(hdr);
+    if (!disabled) {
+      const ta = textarea({ style: { minHeight: '50px', fontSize: '12px' } }); ta.value = a.anomalia;
+      ta.addEventListener('input', e => { a.anomalia = e.target.value; save(); }); item.appendChild(fieldGroup('Anomalia', ta));
+      const g = div({ className: 'grid2 mt10' });
+      const iAz = input({ placeholder: 'Azione Correttiva' }); iAz.value = a.azioneCorrettiva || ''; iAz.addEventListener('input', e => { a.azioneCorrettiva = e.target.value; save(); });
+      const iMin = input({ type: 'number', min: '0', style: { maxWidth: '80px' } }); iMin.value = a.minuti || 0; iMin.addEventListener('input', e => { a.minuti = e.target.value; save(); });
+      g.appendChild(fieldGroup('Azione Correttiva', iAz)); g.appendChild(fieldGroup('Minuti', iMin));
+      item.appendChild(g);
+    } else {
+      if (a.anomalia) item.appendChild(div({ style: { fontSize: '13px', marginBottom: '4px' } }, a.anomalia));
+      if (a.azioneCorrettiva) item.appendChild(div({ className: 'small accent' }, `→ ${a.azioneCorrettiva}`));
+    }
+    list.appendChild(item);
+  });
+  p.appendChild(list);
+  return p;
+};
+
+// ── NC MODAL (root level) ─────────────────────────────────────────────────────
+const showNCModal = (cl, arg, cp) => {
+  const draft = cp.nc ? { ...cp.nc } : newNC(cp.n);
+  const disabled = cl.chiusa;
+  const m = div({ className: 'modal fade' });
+  const hdr = div({ style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' } });
+  const hl = div({});
+  hl.appendChild(div({ className: 'xsmall', style: { color: 'var(--info)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '3px' } }, 'Non Conformità'));
+  hl.appendChild(el('h3', {}, draft.numero));
+  hdr.appendChild(hl); hdr.appendChild(badge(draft.stato === 'Chiusa' ? 'b-ok' : 'b-nc', draft.stato));
+  m.appendChild(hdr);
+  m.appendChild(div({ style: { fontSize: '12px', color: 'var(--accent)', padding: '6px 12px', background: 'var(--surface)', borderRadius: '6px', marginBottom: '6px', fontWeight: '600' } }, arg.titolo));
+  m.appendChild(div({ style: { fontSize: '12px', color: 'var(--muted)', padding: '6px 12px', background: 'var(--surface)', borderRadius: '6px', marginBottom: '16px' } }, `Punto ${cp.n}: ${cp.point}`));
+
+  const fields = div({ className: 'flex-col' });
+  const mkInp = (lbl, key, ph) => { const i = input({ placeholder: ph || '', value: draft[key] || '' }); if (!disabled) i.addEventListener('input', e => { draft[key] = e.target.value; }); else i.disabled = true; fields.appendChild(fieldGroup(lbl, i)); return i; };
+  const mkTa = (lbl, key, ph) => { const i = textarea({ placeholder: ph || '', style: { minHeight: '50px' } }); i.value = draft[key] || ''; if (!disabled) i.addEventListener('input', e => { draft[key] = e.target.value; }); else i.disabled = true; fields.appendChild(fieldGroup(lbl, i)); return i; };
+  const mkSel = (lbl, key, opts) => { const s = el('select'); opts.forEach(o => { const op = el('option', { value: o }, o); if (draft[key] === o) op.selected = true; s.appendChild(op); }); if (!disabled) s.addEventListener('change', e => draft[key] = e.target.value); else s.disabled = true; fields.appendChild(fieldGroup(lbl, s)); return s; };
+
+  const g1 = div({ className: 'grid2' });
+  const iAp = input({ placeholder: 'gg/mm/aaaa', value: draft.dataApertura || '' }); if (!disabled) iAp.addEventListener('input', e => draft.dataApertura = e.target.value); else iAp.disabled = true;
+  g1.appendChild(fieldGroup('Data Apertura', iAp));
+  const sSt = el('select'); ['Aperta', 'In lavorazione', 'Chiusa'].forEach(o => { const op = el('option', { value: o }, o); if (draft.stato === o) op.selected = true; sSt.appendChild(op); }); if (!disabled) sSt.addEventListener('change', e => draft.stato = e.target.value); else sSt.disabled = true;
+  g1.appendChild(fieldGroup('Stato', sSt));
+  fields.appendChild(g1);
+  mkTa('Descrizione NC *', 'descrizione', 'Descrivi la non conformità...');
+  mkTa('Causa', 'causa', 'Causa radice o presunta...');
+  mkTa('Azione Correttiva', 'azioneCorrettiva', 'Azione da intraprendere...');
+  mkInp('Responsabile', 'responsabile', 'Nome responsabile');
+
+  // Tempi
+  const tempiBox = div({ style: { background: 'var(--surface)', borderRadius: '8px', padding: '14px 16px', border: '1px solid var(--border)' } });
+  tempiBox.appendChild(div({ className: 'xsmall accent bold', style: { textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '12px' } }, '⏱ Tempi di Chiusura'));
+  const g2 = div({ className: 'grid2' });
+
+  const giorniPrevEl = input({ readOnly: true, value: draft.giorniPrevisti || '', placeholder: 'automatico', style: { fontWeight: '700', background: 'var(--surface)' } });
+  const giorniEffEl = input({ readOnly: true, value: draft.giorniEffettivi || '', placeholder: 'automatico', style: { fontWeight: '700', background: 'var(--surface)' } });
+  const deltaEl = div({ style: { marginTop: '10px', fontSize: '12px', fontWeight: '700' } });
+
+  const updateGiorni = () => {
+    const gP = daysBetween(draft.dataApertura, draft.dataChiusura);
+    const gE = daysBetween(draft.dataApertura, draft.dataChiusuraEff);
+    draft.giorniPrevisti = gP != null ? String(gP) : '';
+    draft.giorniEffettivi = gE != null ? String(gE) : '';
+    giorniPrevEl.value = draft.giorniPrevisti;
+    giorniPrevEl.style.color = Number(draft.giorniPrevisti) > 30 ? 'var(--danger)' : Number(draft.giorniPrevisti) > 14 ? 'var(--accent)' : 'var(--accent2)';
+    giorniEffEl.value = draft.giorniEffettivi;
+    giorniEffEl.style.color = draft.giorniPrevisti && Number(draft.giorniEffettivi) > Number(draft.giorniPrevisti) ? 'var(--danger)' : 'var(--accent2)';
+    if (draft.giorniPrevisti && draft.giorniEffettivi) {
+      const d = Number(draft.giorniEffettivi) - Number(draft.giorniPrevisti);
+      deltaEl.style.color = d > 0 ? 'var(--danger)' : d < 0 ? 'var(--accent2)' : 'var(--muted)';
+      deltaEl.textContent = d > 0 ? `⚠ Ritardo: +${d} giorni` : d < 0 ? `✓ Anticipo: ${Math.abs(d)} giorni` : '✓ Chiusa nei tempi';
+    } else { deltaEl.textContent = ''; }
+  };
+
+  const iPrev = input({ placeholder: 'gg/mm/aaaa', value: draft.dataChiusura || '' });
+  if (!disabled) iPrev.addEventListener('input', e => { draft.dataChiusura = e.target.value; updateGiorni(); }); else iPrev.disabled = true;
+  const iEff = input({ placeholder: 'gg/mm/aaaa', value: draft.dataChiusuraEff || '' });
+  if (!disabled) iEff.addEventListener('input', e => { draft.dataChiusuraEff = e.target.value; if (e.target.value) draft.stato = 'Chiusa'; updateGiorni(); }); else iEff.disabled = true;
+
+  g2.appendChild(fieldGroup('Data Chiusura Prevista', iPrev));
+  g2.appendChild(fieldGroup('Giorni Previsti', giorniPrevEl));
+  g2.appendChild(fieldGroup('Data Chiusura Effettiva', iEff));
+  g2.appendChild(fieldGroup('Giorni Effettivi', giorniEffEl));
+  tempiBox.appendChild(g2);
+  tempiBox.appendChild(deltaEl);
+  fields.appendChild(tempiBox);
+  m.appendChild(fields);
+  updateGiorni();
+
+  const btns = div({ className: 'flex mt20' });
+  if (!disabled) {
+    btns.appendChild(btn('btn-info', '💾 Salva NC', () => {
+      if (!draft.descrizione.trim()) { alert('Descrivi la NC'); return; }
+      cp.nc = draft; save(); overlay.remove(); render();
+    }));
+    if (cp.nc) btns.appendChild(btn('btn-danger', '🗑 Rimuovi NC', () => { if (confirm('Rimuovere la NC?')) { cp.nc = null; save(); overlay.remove(); render(); } }));
+  }
+  btns.appendChild(btn('btn-ghost', 'Chiudi', () => overlay.remove()));
+  m.appendChild(btns);
+  const overlay = div({ className: 'overlay', onClick: e => { if (e.target === overlay) overlay.remove(); } }, m);
+  document.getElementById('modal-root').appendChild(overlay);
+};
+
+// ── SEG MODAL ─────────────────────────────────────────────────────────────────
+const showSegModal = (cl, arg, cp) => {
+  const draft = cp.segnalazione ? { ...cp.segnalazione } : newSeg(cp.n);
+  const disabled = cl.chiusa;
+  const m = div({ className: 'modal fade' });
+  const hdr = div({ style: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' } });
+  const hl = div({});
+  hl.appendChild(div({ className: 'xsmall', style: { color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '3px' } }, 'Segnalazione'));
+  hl.appendChild(el('h3', {}, draft.numero));
+  hdr.appendChild(hl);
+  const hdrRight = div({ className: 'flex' });
+  const prioBadge = span({ style: { fontSize: '11px', padding: '3px 10px', borderRadius: '20px', fontWeight: '700', background: draft.priorita === 'Critica' ? '#3d1a1a' : draft.priorita === 'Alta' ? '#3d2d0a' : 'var(--surface)', color: draft.priorita === 'Critica' ? 'var(--danger)' : draft.priorita === 'Alta' ? 'var(--accent)' : 'var(--muted)' } }, draft.priorita);
+  hdrRight.appendChild(prioBadge); hdrRight.appendChild(badge(draft.stato === 'Chiusa' ? 'b-ok' : 'b-seg', draft.stato));
+  hdr.appendChild(hdrRight); m.appendChild(hdr);
+  m.appendChild(div({ style: { fontSize: '12px', color: 'var(--accent)', padding: '6px 12px', background: 'var(--surface)', borderRadius: '6px', marginBottom: '6px', fontWeight: '600' } }, arg.titolo));
+  m.appendChild(div({ style: { fontSize: '12px', color: 'var(--muted)', padding: '6px 12px', background: 'var(--surface)', borderRadius: '6px', marginBottom: '16px' } }, `Punto ${cp.n}: ${cp.point}`));
+
+  const fields = div({ className: 'flex-col' });
+  const g1 = div({ className: 'grid2' });
+  const sPrio = el('select'); ['Bassa', 'Media', 'Alta', 'Critica'].forEach(o => { const op = el('option', { value: o }, o); if (draft.priorita === o) op.selected = true; sPrio.appendChild(op); }); if (!disabled) sPrio.addEventListener('change', e => draft.priorita = e.target.value); else sPrio.disabled = true;
+  const sSt = el('select'); ['Aperta', 'In lavorazione', 'Chiusa'].forEach(o => { const op = el('option', { value: o }, o); if (draft.stato === o) op.selected = true; sSt.appendChild(op); }); if (!disabled) sSt.addEventListener('change', e => draft.stato = e.target.value); else sSt.disabled = true;
+  g1.appendChild(fieldGroup('Priorità', sPrio)); g1.appendChild(fieldGroup('Stato', sSt)); fields.appendChild(g1);
+  const taDesc = textarea({ placeholder: 'Descrivi la segnalazione...' }); taDesc.value = draft.descrizione; if (!disabled) taDesc.addEventListener('input', e => draft.descrizione = e.target.value); else taDesc.disabled = true;
+  fields.appendChild(fieldGroup('Descrizione *', taDesc));
+  const g2 = div({ className: 'grid2' });
+  const iResp = input({ placeholder: 'Nome responsabile', value: draft.responsabile || '' }); if (!disabled) iResp.addEventListener('input', e => draft.responsabile = e.target.value); else iResp.disabled = true;
+  const iScad = input({ placeholder: 'gg/mm/aaaa', value: draft.dataChiusura || '' }); if (!disabled) iScad.addEventListener('input', e => draft.dataChiusura = e.target.value); else iScad.disabled = true;
+  g2.appendChild(fieldGroup('Responsabile', iResp)); g2.appendChild(fieldGroup('Data Chiusura Prevista', iScad)); fields.appendChild(g2);
+  m.appendChild(fields);
+
+  const btns = div({ className: 'flex mt20' });
+  if (!disabled) {
+    btns.appendChild(btn('btn-purple', '💾 Salva', () => { if (!draft.descrizione.trim()) { alert('Descrivi la Segnalazione'); return; } cp.segnalazione = draft; save(); overlay.remove(); render(); }));
+    if (cp.segnalazione) btns.appendChild(btn('btn-danger', '🗑 Rimuovi', () => { if (confirm('Rimuovere?')) { cp.segnalazione = null; save(); overlay.remove(); render(); } }));
+  }
+  btns.appendChild(btn('btn-ghost', 'Chiudi', () => overlay.remove()));
+  m.appendChild(btns);
+  const overlay = div({ className: 'overlay', onClick: e => { if (e.target === overlay) overlay.remove(); } }, m);
+  document.getElementById('modal-root').appendChild(overlay);
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════════════════════════════════════════════
+const renderReport = () => {
+  const cl = getCL(); if (!cl) return go('home'), div({});
+  const personale = cl.personale || [];
+  const allCP = cl.argomenti.flatMap(a => a.checkPoints.map(p => ({ ...p, argTitolo: a.titolo, argPersonaleId: a.personaleId })));
+  const ok = allCP.filter(p => p.esito === 'OK').length;
+  const no = allCP.filter(p => p.esito === 'NO').length;
+  const na = allCP.filter(p => p.esito === 'N/A').length;
+  const nd = allCP.filter(p => p.esito === '—').length;
+  const ptsNC = allCP.filter(p => p.nc);
+  const allAnom = allCP.flatMap(p => (p.anomalie || []).map(a => ({ ...a, puntoN: p.n, argTitolo: p.argTitolo })));
+  const totMin = allAnom.reduce((s, a) => s + Number(a.minuti || 0), 0);
+  const getNome = id => personale.find(p => p.id === id);
+
+  const root = div({ className: 'fade' });
+  const card = div({ className: 'card' });
+
+  // Titolo
+  const titRow = div({ style: { borderBottom: '2px solid var(--accent)', paddingBottom: '14px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } });
+  const titLeft = div({});
+  titLeft.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '4px' } }, 'Report Audit'));
+  titLeft.appendChild(el('h2', {}, cl.moduloTitolo));
+  titRow.appendChild(titLeft);
+  titRow.appendChild(badge(cl.chiusa ? (cl.esito === 'OK' ? 'b-ok' : 'b-no') : 'b-wip', cl.chiusa ? cl.esito : 'In corso'));
+  card.appendChild(titRow);
+
+  // Meta
+  const metaGrid = div({ className: 'grid2 mb20' });
+  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
+    const c = div({ style: { padding: '10px 14px', background: 'var(--surface)', borderRadius: '8px' } });
+    c.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', marginBottom: '3px' } }, k));
+    c.appendChild(div({ style: { fontSize: '13px', fontWeight: '600' } }, v));
+    metaGrid.appendChild(c);
+  });
+  card.appendChild(metaGrid);
+
+  // Stats
+  const statsGrid = div({ className: 'grid4 mb20' });
+  [['Conformi', ok, 'var(--accent2)'], ['Non conformi', no, 'var(--danger)'], ['N/A', na, 'var(--muted)'], ['Da verif.', nd, 'var(--accent)']].forEach(([l, v, c]) => {
+    const s = div({ style: { textAlign: 'center', padding: '12px 6px', background: 'var(--surface)', borderRadius: '8px' } });
+    s.appendChild(div({ style: { fontSize: '24px', fontWeight: '700', color: c } }, String(v)));
+    s.appendChild(div({ className: 'xsmall muted mt8' }, l));
+    statsGrid.appendChild(s);
+  });
+  card.appendChild(statsGrid);
+
+  // ── ISTOGRAMMA: Distribuzione esiti ──
+  card.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, '📊 Distribuzione Esiti'));
+  const chartData = [['Conformi', ok, 'var(--accent2)'], ['Non conformi', no, 'var(--danger)'], ['N/A', na, 'var(--muted)'], ['Da verificare', nd, 'var(--accent)']];
+  const maxVal = Math.max(1, ...chartData.map(d => d[1]));
+  const chartBox = div({ style: { display: 'flex', alignItems: 'flex-end', gap: '16px', height: '180px', padding: '12px 16px 0', background: 'var(--surface)', borderRadius: '8px', marginBottom: '20px' } });
+  chartData.forEach(([label, val, color]) => {
+    const colWrap = div({ style: { flex: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: '6px' } });
+    colWrap.appendChild(div({ style: { fontWeight: '700', fontSize: '15px', color } }, String(val)));
+    colWrap.appendChild(div({ style: { width: '100%', maxWidth: '64px', height: Math.round(val / maxVal * 110) + 'px', minHeight: val > 0 ? '4px' : '0px', background: color, borderRadius: '6px 6px 0 0', transition: 'height .4s' } }));
+    colWrap.appendChild(div({ className: 'xsmall muted', style: { textAlign: 'center', minHeight: '26px', lineHeight: '1.2' } }, label));
+    chartBox.appendChild(colWrap);
+  });
+  card.appendChild(chartBox);
+
+  // ── ISTOGRAMMA: Conformità per argomento ──
+  if (cl.argomenti.length > 0) {
+    card.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, '📈 Conformità per Argomento'));
+    const argChart = div({ className: 'flex-col', style: { gap: '12px', background: 'var(--surface)', borderRadius: '8px', padding: '16px', marginBottom: '20px' } });
+    cl.argomenti.forEach((arg, ai) => {
+      const cps = arg.checkPoints;
+      const aOk = cps.filter(p => p.esito === 'OK').length;
+      const aValut = cps.filter(p => p.esito === 'OK' || p.esito === 'NO').length;
+      const aPct = aValut ? Math.round(aOk / aValut * 100) : 0;
+      const col = aPct >= 85 ? 'var(--accent2)' : aPct >= 60 ? 'var(--accent)' : 'var(--danger)';
+      const rowW = div({});
+      const top = div({ className: 'flex', style: { justifyContent: 'space-between', marginBottom: '5px' } });
+      top.appendChild(span({ className: 'xsmall', style: { fontWeight: '600' } }, `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`));
+      top.appendChild(span({ className: 'xsmall bold', style: { color: col } }, aValut ? `${aPct}% (${aOk}/${aValut})` : 'n.d.'));
+      rowW.appendChild(top);
+      const track = div({ style: { height: '14px', background: 'var(--bg)', borderRadius: '7px', overflow: 'hidden' } });
+      track.appendChild(div({ style: { height: '100%', width: aPct + '%', background: col, borderRadius: '7px', transition: 'width .4s' } }));
+      rowW.appendChild(track);
+      argChart.appendChild(rowW);
+    });
+    card.appendChild(argChart);
+  }
+
+  // Personale
+  if (personale.length > 0) {
+    card.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, `👥 Personale Audit (${personale.length})`));
+    const persRow = div({ className: 'flex mb20' });
+    personale.forEach(p => {
+      const c = div({ style: { padding: '8px 14px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' } });
+      c.appendChild(div({ style: { fontWeight: '600', fontSize: '13px' } }, p.nominativo || '—'));
+      c.appendChild(div({ className: 'xsmall muted' }, p.mansione || '—'));
+      persRow.appendChild(c);
+    });
+    card.appendChild(persRow);
+  }
+
+  // Check points
+  card.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, 'Check Points per Argomento'));
+  cl.argomenti.forEach((arg, ai) => {
+    const pers = getNome(arg.personaleId);
+    const argWrapper = div({ style: { marginBottom: '16px' } });
+    const argHdr = div({ style: { background: 'var(--surface)', padding: '8px 14px', borderRadius: '8px 8px 0 0', borderLeft: '3px solid var(--accent)', border: '1px solid var(--border)', borderBottom: 'none', display: 'flex', alignItems: 'center', gap: '12px' } });
+    argHdr.appendChild(span({ style: { fontWeight: '700', fontSize: '13px', flex: '1' } }, `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`));
+    if (pers) argHdr.appendChild(span({ className: 'xsmall', style: { color: 'var(--accent2)' } }, `👤 ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}`));
+    argWrapper.appendChild(argHdr);
+    const argBody = div({ style: { border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 8px 8px' } });
+    arg.checkPoints.forEach((p, i) => {
+      const row = div({ style: { display: 'flex', gap: '10px', padding: '8px 14px', borderBottom: i < arg.checkPoints.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'flex-start' } });
+      row.appendChild(span({ className: 'xsmall muted', style: { minWidth: '22px' } }, String(i + 1).padStart(2, '0')));
+      const info = div({ style: { flex: '1' } });
+      info.appendChild(div({ style: { fontSize: '13px' } }, p.point));
+      if (p.note) info.appendChild(div({ className: 'xsmall muted', style: { marginTop: '2px', fontStyle: 'italic' } }, `✎ ${p.note}`));
+      if (p.nc) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--info)', marginTop: '2px' } }, `📋 ${p.nc.numero} [${p.nc.stato}]${p.nc.giorniPrevisti ? ` Prev:${p.nc.giorniPrevisti}gg` : ''}${p.nc.giorniEffettivi ? ` Eff:${p.nc.giorniEffettivi}gg` : ''}`));
+      if (p.segnalazione) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--purple)', marginTop: '2px' } }, `🚩 ${p.segnalazione.numero} ${p.segnalazione.priorita}`));
+      row.appendChild(info);
+      row.appendChild(badge(EK[p.esito], p.esito));
+      argBody.appendChild(row);
+    });
+    argWrapper.appendChild(argBody);
+    card.appendChild(argWrapper);
+  });
+
+  // NC
+  if (ptsNC.length > 0) {
+    card.appendChild(div({ className: 'xsmall bold mb12 mt8', style: { color: 'var(--info)', textTransform: 'uppercase', letterSpacing: '.08em' } }, `Non Conformità (${ptsNC.length})`));
+    const ncList = div({ className: 'flex-col mb20' });
+    ptsNC.forEach(p => {
+      const item = div({ style: { padding: '10px 14px', background: 'var(--surface)', borderRadius: '8px', borderLeft: `3px solid ${p.nc.stato === 'Chiusa' ? 'var(--accent2)' : 'var(--info)'}` } });
+      const r = div({ className: 'flex mb8' });
+      r.appendChild(span({ className: 'xsmall', style: { color: 'var(--info)' } }, p.nc.numero));
+      r.appendChild(badge(p.nc.stato === 'Chiusa' ? 'b-ok' : 'b-nc', p.nc.stato));
+      r.appendChild(span({ className: 'xsmall accent bold' }, p.argTitolo));
+      if (p.nc.giorniPrevisti) r.appendChild(span({ className: 'xsmall muted' }, `Prev:${p.nc.giorniPrevisti}gg`));
+      if (p.nc.giorniEffettivi) r.appendChild(span({ className: 'xsmall', style: { color: Number(p.nc.giorniEffettivi) > Number(p.nc.giorniPrevisti) ? 'var(--danger)' : 'var(--accent2)' } }, `Eff:${p.nc.giorniEffettivi}gg`));
+      item.appendChild(r);
+      item.appendChild(div({ className: 'small mb8' }, p.nc.descrizione || '—'));
+      if (p.nc.azioneCorrettiva) item.appendChild(div({ className: 'small accent' }, `→ ${p.nc.azioneCorrettiva}`));
+      if (p.nc.responsabile) item.appendChild(div({ className: 'xsmall muted mt8' }, `Resp: ${p.nc.responsabile}`));
+      ncList.appendChild(item);
+    });
+    card.appendChild(ncList);
+  }
+
+  // Anomalie
+  if (allAnom.length > 0) {
+    card.appendChild(div({ className: 'xsmall bold mb12', style: { color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '.08em' } }, `Anomalie (${allAnom.length}) — ${totMin} min`));
+    const anomList = div({ className: 'flex-col mb20' });
+    allAnom.forEach((a, i) => {
+      const item = div({ style: { padding: '8px 12px', background: 'var(--surface)', borderRadius: '8px', borderLeft: `3px solid ${a.stato === 'Chiusa' ? 'var(--accent2)' : 'var(--danger)'}` } });
+      const r = div({ className: 'flex mb8' });
+      r.appendChild(span({ className: 'xsmall muted' }, `#${i + 1}`));
+      r.appendChild(span({ className: 'xsmall accent bold' }, a.argTitolo));
+      r.appendChild(span({ className: 'xsmall muted' }, `Pt.${a.puntoN}`));
+      r.appendChild(badge(a.stato === 'Chiusa' ? 'b-ok' : 'b-no', a.stato));
+      if (a.minuti > 0) r.appendChild(span({ className: 'xsmall muted' }, `⏱ ${a.minuti}min`));
+      item.appendChild(r);
+      item.appendChild(div({ style: { fontSize: '13px' } }, a.anomalia));
+      if (a.azioneCorrettiva) item.appendChild(div({ className: 'small accent mt8' }, `→ ${a.azioneCorrettiva}`));
+      anomList.appendChild(item);
+    });
+    card.appendChild(anomList);
+  }
+
+  // Buttons
+  const btns = div({ className: 'flex' });
+  btns.appendChild(btn('btn-primary', '📋 Copia Report', () => {
+    const txt = [
+      `=== REPORT AUDIT ===`, `Modulo: ${cl.moduloTitolo} ${cl.moduloMatricola}`,
+      `Data: ${cl.data} | Postazione: ${cl.postazione} | Ambito: ${cl.ambito || '—'}`,
+      `Auditor: ${cl.persona || '—'} | Oggetto: ${cl.oggetto || '—'}`, `Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, '',
+      personale.length ? [`--- PERSONALE (${personale.length}) ---`, ...personale.map(p => `  ${p.nominativo || '—'} — ${p.mansione || '—'}`)].join('\n') : '',
+      `--- CHECK POINTS (${ok} OK | ${no} NO | ${na} N/A | ${nd} —) ---`,
+      ...cl.argomenti.map(arg => { const pers = getNome(arg.personaleId); return [`\n[${arg.titolo.toUpperCase()}]${pers ? ` — Interv: ${pers.nominativo}` : ''}`, ...arg.checkPoints.map(p => [`  [${p.esito}] ${p.n}. ${p.point}`, p.note ? `     Note: ${p.note}` : '', p.nc ? `     NC ${p.nc.numero} [${p.nc.stato}]` : '', p.segnalazione ? `     SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join('\n'))].join('\n'); }),
+      '', ptsNC.length ? [`--- NC (${ptsNC.length}) ---`, ...ptsNC.map(p => `  ${p.nc.numero} [${p.nc.stato}] [${p.argTitolo}]\n    ${p.nc.descrizione}\n    Resp: ${p.nc.responsabile || '—'} | Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg`)].join('\n') : '',
+      '', allAnom.length ? [`--- ANOMALIE (${allAnom.length}) | ${totMin}min ---`, ...allAnom.map((a, i) => `  ${i + 1}. [${a.argTitolo}·Pt.${a.puntoN}] [${a.stato}] ${a.anomalia}`)].join('\n') : '',
+      '', '=== FINE ==='
+    ].filter(l => l !== '').join('\n');
+    navigator.clipboard.writeText(txt).then(() => alert('Report copiato!'));
+  }));
+  btns.appendChild(btn('btn-success', '📄 Scarica Word (.docx)', () => downloadDocx(cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totMin)));
+  btns.appendChild(btn('btn-ghost', '← Torna all\'Audit', () => go('cl-detail')));
+  card.appendChild(btns);
+  root.appendChild(card);
+  return root;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DOCX GENERATOR
+// ══════════════════════════════════════════════════════════════════════════════
+const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totMin) => {
+  const xe2 = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const para = (t, o = {}) => { const { bold: b = false, size: sz = 20, color: c = '000000', spBefore: sb = 0, spAfter: sa = 60 } = o; return `<w:p><w:pPr><w:spacing w:before="${sb}" w:after="${sa}"/></w:pPr><w:r><w:rPr>${b ? '<w:b/><w:bCs/>' : ''}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:color w:val="${c}"/></w:rPr><w:t xml:space="preserve">${xe2(t)}</w:t></w:r></w:p>`; };
+  const brd = `<w:tblBorders>${['top', 'bottom', 'left', 'right', 'insideH', 'insideV'].map(s => `<w:${s} w:val="single" w:sz="4" w:color="CCCCCC"/>`).join('')}</w:tblBorders>`;
+  const trow = (cells, hdr = false) => `<w:tr>${cells.map(({ t, w, c, b }) => `<w:tc><w:tcPr><w:tcW w:w="${w || 1500}" w:type="dxa"/>${hdr ? '<w:shd w:val="clear" w:fill="E8ECF4"/>' : ''}</w:tcPr><w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr><w:r><w:rPr>${b || hdr ? '<w:b/><w:bCs/>' : ''}<w:sz w:val="16"/><w:szCs w:val="16"/>${c ? `<w:color w:val="${c}"/>` : ''}</w:rPr><w:t xml:space="preserve">${xe2(t || '—')}</w:t></w:r></w:p></w:tc>`).join('')}</w:tr>`;
+
+  const getNome = id => personale.find(p => p.id === id);
+
+  const persSection = personale.length === 0 ? '' : para('Personale Audit', { bold: true, size: 22, color: '1a4a2a', spBefore: 160, spAfter: 80 }) +
+    `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="4250"/><w:gridCol w:w="4250"/></w:tblGrid>
+    ${trow([{ t: 'Nominativo', w: 4250 }, { t: 'Mansione / Ruolo', w: 4250 }], true)}
+    ${personale.map(p => trow([{ t: p.nominativo || '—', w: 4250 }, { t: p.mansione || '—', w: 4250 }])).join('')}</w:tbl>`;
+
+  const cpSection = cl.argomenti.map(arg => {
+    const pers = getNome(arg.personaleId);
+    return [
+      para(`${arg.titolo}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
+      `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="7300"/><w:gridCol w:w="800"/></w:tblGrid>`,
+      trow([{ t: 'N.', w: 400 }, { t: 'Punto di Controllo', w: 7300 }, { t: 'Esito', w: 800 }], true),
+      ...arg.checkPoints.map(p => { const ex = [p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
+      '</w:tbl>'
+    ].join('');
+  }).join('');
+
+  const ncSec = ptsNC.length === 0 ? '' : para('Non Conformità', { bold: true, size: 22, color: '1a4a7a', spBefore: 240, spAfter: 80 }) +
+    `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[1000, 1000, 1600, 1600, 1200, 600, 600, 900].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
+    ${trow([{ t: 'NC', w: 1000 }, { t: 'Argomento', w: 1000 }, { t: 'Descrizione', w: 1600 }, { t: 'Azione', w: 1600 }, { t: 'Responsabile', w: 1200 }, { t: 'Prev(gg)', w: 600 }, { t: 'Eff(gg)', w: 600 }, { t: 'Stato', w: 900 }], true)}
+    ${ptsNC.map(p => trow([{ t: p.nc.numero, w: 1000 }, { t: p.argTitolo, w: 1000 }, { t: p.nc.descrizione || '—', w: 1600 }, { t: p.nc.azioneCorrettiva || '—', w: 1600 }, { t: p.nc.responsabile || '—', w: 1200 }, { t: (p.nc.giorniPrevisti || '—') + '', w: 600 }, { t: (p.nc.giorniEffettivi || '—') + '', w: 600 }, { t: p.nc.stato, w: 900, c: p.nc.stato === 'Chiusa' ? '1a7a4a' : 'c0392b', b: true }])).join('')}</w:tbl>`;
+
+  // ── Grafici a barre per il Word ──
+  const xbar = (label, blocks, color, val, lblW) => `<w:tr>` +
+    `<w:tc><w:tcPr><w:tcW w:w="${lblW}" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">${xe2(label)}</w:t></w:r></w:p></w:tc>` +
+    `<w:tc><w:tcPr><w:tcW w:w="${7500 - lblW}" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${color}"/></w:rPr><w:t xml:space="preserve">${'█'.repeat(Math.max(0, blocks))}</w:t></w:r></w:p></w:tc>` +
+    `<w:tc><w:tcPr><w:tcW w:w="1000" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${color}"/></w:rPr><w:t xml:space="preserve">${xe2(val)}</w:t></w:r></w:p></w:tc>` +
+    `</w:tr>`;
+  const chartTbl = (rows, lblW) => `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/></w:tblPr><w:tblGrid><w:gridCol w:w="${lblW}"/><w:gridCol w:w="${7500 - lblW}"/><w:gridCol w:w="1000"/></w:tblGrid>${rows}</w:tbl>`;
+  const maxE = Math.max(1, ok, no, na, nd);
+  const esitiChartXml = para('Distribuzione Esiti', { bold: true, size: 22, spBefore: 240, spAfter: 80 }) + chartTbl(
+    xbar('Conformi', Math.round(ok / maxE * 30), '1a7a4a', String(ok), 2200) +
+    xbar('Non conformi', Math.round(no / maxE * 30), 'c0392b', String(no), 2200) +
+    xbar('N/A', Math.round(na / maxE * 30), '777777', String(na), 2200) +
+    xbar('Da verificare', Math.round(nd / maxE * 30), 'd35400', String(nd), 2200), 2200);
+  const argChartXml = cl.argomenti.length === 0 ? '' : para('Conformità per Argomento', { bold: true, size: 22, spBefore: 200, spAfter: 80 }) + chartTbl(
+    cl.argomenti.map((arg, ai) => {
+      const cps = arg.checkPoints;
+      const aOk = cps.filter(p => p.esito === 'OK').length;
+      const aVal = cps.filter(p => p.esito === 'OK' || p.esito === 'NO').length;
+      const aPct = aVal ? Math.round(aOk / aVal * 100) : 0;
+      const c = aPct >= 85 ? '1a7a4a' : aPct >= 60 ? 'd35400' : 'c0392b';
+      return xbar(`${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`, Math.round(aPct / 100 * 30), c, aVal ? aPct + '%' : 'n.d.', 3200);
+    }).join(''), 3200);
+
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+  ${para('REPORT AUDIT CANTIERE', { bold: true, size: 32, color: 'F5A623', spAfter: 100 })}
+  ${para(cl.moduloTitolo, { bold: true, size: 24, spAfter: 60 })}
+  ${para(`Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, { bold: true, size: 22, color: cl.chiusa ? (cl.esito === 'OK' ? '1a7a4a' : 'c0392b') : 'b7770d', spAfter: 160 })}
+  <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="2000"/><w:gridCol w:w="6500"/></w:tblGrid>
+  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
+  ${para(' ', { spBefore: 60, spAfter: 40 })}
+  <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[2125, 2125, 2125, 2125].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
+  ${trow([{ t: 'Conformi' }, { t: 'Non conformi' }, { t: 'N/A' }, { t: 'Da verificare' }], true)}
+  ${trow([{ t: String(ok), c: '1a7a4a', b: true }, { t: String(no), c: 'c0392b', b: true }, { t: String(na), b: true }, { t: String(nd), c: 'd35400', b: true }])}</w:tbl>
+  ${esitiChartXml}
+  ${argChartXml}
+  ${persSection}
+  ${para(' ', { spBefore: 60, spAfter: 40 })}
+  ${para('Check Points per Argomento', { bold: true, size: 22, spAfter: 80 })}
+  ${cpSection}${ncSec}
+  ${allAnom.length ? para(`Anomalie (${allAnom.length}) — ${totMin} min`, { bold: true, size: 22, color: '8B0000', spBefore: 240, spAfter: 80 }) +
+    `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="1200"/><w:gridCol w:w="2300"/><w:gridCol w:w="2300"/><w:gridCol w:w="600"/><w:gridCol w:w="700"/><w:gridCol w:w="1000"/></w:tblGrid>
+    ${trow([{ t: '#', w: 400 }, { t: 'Argomento', w: 1200 }, { t: 'Anomalia', w: 2300 }, { t: 'Azione', w: 2300 }, { t: 'Pt.', w: 600 }, { t: 'Min', w: 700 }, { t: 'Stato', w: 1000 }], true)}
+    ${allAnom.map((a, i) => trow([{ t: String(i + 1), w: 400 }, { t: a.argTitolo, w: 1200 }, { t: a.anomalia, w: 2300 }, { t: a.azioneCorrettiva || '—', w: 2300 }, { t: String(a.puntoN), w: 600 }, { t: String(a.minuti || 0), w: 700 }, { t: a.stato, w: 1000, c: a.stato === 'Chiusa' ? '1a7a4a' : 'c0392b', b: true }])).join('')}</w:tbl>` : ''}
+  ${para(`Generato il ${new Date().toLocaleString('it-IT')}`, { size: 16, color: '999999', spBefore: 240 })}
+  <w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr>
+  </w:body></w:document>`;
+
+  const enc = new TextEncoder(); const toB = s => enc.encode(s);
+  const crc32 = buf => { let c = 0xFFFFFFFF; const t = new Uint32Array(256); for (let i = 0; i < 256; i++) { let v = i; for (let j = 0; j < 8; j++) v = v & 1 ? 0xEDB88320 ^ (v >>> 1) : v >>> 1; t[i] = v; } for (let i = 0; i < buf.length; i++) c = t[(c ^ buf[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const u16 = n => { const b = new Uint8Array(2); new DataView(b.buffer).setUint16(0, n, true); return b; };
+  const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
+  const entry = (name, data) => { const nb = enc.encode(name); const crc = crc32(data); const local = new Uint8Array([0x50, 0x4B, 0x03, 0x04, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nb.length), 0, 0, ...nb]); return { nb, data, crc, local, offset: 0 }; };
+  const buildZip = entries => { let off = 0; const parts = [], cents = []; for (const e of entries) { e.offset = off; parts.push(e.local, e.data); off += e.local.length + e.data.length; cents.push(new Uint8Array([0x50, 0x4B, 0x01, 0x02, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(e.crc), ...u32(e.data.length), ...u32(e.data.length), ...u16(e.nb.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(e.offset), ...e.nb])); } const cdSize = cents.reduce((s, c) => s + c.length, 0); const eocd = new Uint8Array([0x50, 0x4B, 0x05, 0x06, 0, 0, 0, 0, ...u16(entries.length), ...u16(entries.length), ...u32(cdSize), ...u32(off), 0, 0]); const total = parts.reduce((s, p) => s + p.length, 0) + cdSize + eocd.length; const out = new Uint8Array(total); let pos = 0; const w = b => { out.set(b, pos); pos += b.length; }; parts.forEach(w); cents.forEach(w); w(eocd); return out; };
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+  const bytes = buildZip([entry('[Content_Types].xml', toB(ct)), entry('_rels/.rels', toB(rels)), entry('word/document.xml', toB(docXml)), entry('word/_rels/document.xml.rels', toB(wrels))]);
+  const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
+  a.download = `Report_${cl.moduloTitolo.replace(/\s+/g, '_')}_${cl.data.replace(/\//g, '-')}.docx`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+const s = load(); if (s) DB = s;
+document.getElementById('today').textContent = new Date().toLocaleDateString('it-IT');
+render();
+</script>
+</body>
+</html>
