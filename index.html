@@ -1260,30 +1260,63 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
     ${trow([{ t: 'NC', w: 1000 }, { t: 'Argomento', w: 1000 }, { t: 'Descrizione', w: 1600 }, { t: 'Azione', w: 1600 }, { t: 'Responsabile', w: 1200 }, { t: 'Prev(gg)', w: 600 }, { t: 'Eff(gg)', w: 600 }, { t: 'Stato', w: 900 }], true)}
     ${ptsNC.map(p => trow([{ t: p.nc.numero, w: 1000 }, { t: p.argTitolo, w: 1000 }, { t: p.nc.descrizione || '—', w: 1600 }, { t: p.nc.azioneCorrettiva || '—', w: 1600 }, { t: p.nc.responsabile || '—', w: 1200 }, { t: (p.nc.giorniPrevisti || '—') + '', w: 600 }, { t: (p.nc.giorniEffettivi || '—') + '', w: 600 }, { t: p.nc.stato, w: 900, c: p.nc.stato === 'Chiusa' ? '1a7a4a' : 'c0392b', b: true }])).join('')}</w:tbl>`;
 
-  // ── Grafici a barre per il Word ──
-  const xbar = (label, blocks, color, val, lblW) => `<w:tr>` +
-    `<w:tc><w:tcPr><w:tcW w:w="${lblW}" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">${xe2(label)}</w:t></w:r></w:p></w:tc>` +
-    `<w:tc><w:tcPr><w:tcW w:w="${7500 - lblW}" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${color}"/></w:rPr><w:t xml:space="preserve">${'█'.repeat(Math.max(0, blocks))}</w:t></w:r></w:p></w:tc>` +
-    `<w:tc><w:tcPr><w:tcW w:w="1000" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="${color}"/></w:rPr><w:t xml:space="preserve">${xe2(val)}</w:t></w:r></w:p></w:tc>` +
-    `</w:tr>`;
-  const chartTbl = (rows, lblW) => `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/></w:tblPr><w:tblGrid><w:gridCol w:w="${lblW}"/><w:gridCol w:w="${7500 - lblW}"/><w:gridCol w:w="1000"/></w:tblGrid>${rows}</w:tbl>`;
-  const maxE = Math.max(1, ok, no, na, nd);
-  const esitiChartXml = para('Distribuzione Esiti', { bold: true, size: 22, spBefore: 240, spAfter: 80 }) + chartTbl(
-    xbar('Conformi', Math.round(ok / maxE * 30), '1a7a4a', String(ok), 2200) +
-    xbar('Non conformi', Math.round(no / maxE * 30), 'c0392b', String(no), 2200) +
-    xbar('N/A', Math.round(na / maxE * 30), '777777', String(na), 2200) +
-    xbar('Da verificare', Math.round(nd / maxE * 30), 'd35400', String(nd), 2200), 2200);
-  const argChartXml = cl.argomenti.length === 0 ? '' : para('Conformità per Argomento', { bold: true, size: 22, spBefore: 200, spAfter: 80 }) + chartTbl(
-    cl.argomenti.map((arg, ai) => {
+  // ── Grafico (immagine) per il Word, identico a quello a schermo ──
+  let chartImgBytes = null, chartDrawingXml = '';
+  try {
+    const argsData = cl.argomenti.map((arg, ai) => {
       const cps = arg.checkPoints;
       const aOk = cps.filter(p => p.esito === 'OK').length;
       const aVal = cps.filter(p => p.esito === 'OK' || p.esito === 'NO').length;
-      const aPct = aVal ? Math.round(aOk / aVal * 100) : 0;
-      const c = aPct >= 85 ? '1a7a4a' : aPct >= 60 ? 'd35400' : 'c0392b';
-      return xbar(`${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`, Math.round(aPct / 100 * 30), c, aVal ? aPct + '%' : 'n.d.', 3200);
-    }).join(''), 3200);
+      return { titolo: `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`, pct: aVal ? Math.round(aOk / aVal * 100) : 0, has: aVal > 0 };
+    });
+    const W = 620, esitiH = 230, argHeaderH = argsData.length ? 46 : 0, argRowH = 34;
+    const H = esitiH + argHeaderH + argsData.length * argRowH + 16;
+    const sc = 2, cv = document.createElement('canvas');
+    cv.width = W * sc; cv.height = H * sc;
+    const ctx = cv.getContext('2d'); ctx.scale(sc, sc);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    // Titolo + barre verticali esiti
+    ctx.fillStyle = '#1f2330'; ctx.font = 'bold 15px "Segoe UI", Arial'; ctx.textAlign = 'left';
+    ctx.fillText('Distribuzione Esiti', 10, 24);
+    const esiti = [['Conformi', ok, '#3ecf8e'], ['Non conformi', no, '#ff5c5c'], ['N/A', na, '#7a85a3'], ['Da verificare', nd, '#f5a623']];
+    const maxV = Math.max(1, ok, no, na, nd), baseY = 180, maxBarH = 110, colW = 135, x0 = 50, bw = 80;
+    esiti.forEach(([lbl, val, col], i) => {
+      const cx = x0 + i * colW, bh = Math.round(val / maxV * maxBarH);
+      ctx.fillStyle = col; ctx.fillRect(cx, baseY - bh, bw, bh);
+      ctx.fillStyle = '#1f2330'; ctx.font = 'bold 14px "Segoe UI", Arial'; ctx.textAlign = 'center';
+      ctx.fillText(String(val), cx + bw / 2, baseY - bh - 6);
+      ctx.fillStyle = '#5a6478'; ctx.font = '11px "Segoe UI", Arial';
+      ctx.fillText(lbl, cx + bw / 2, baseY + 16);
+    });
+    ctx.textAlign = 'left'; ctx.strokeStyle = '#d0d5dd';
+    ctx.beginPath(); ctx.moveTo(40, baseY + 0.5); ctx.lineTo(W - 10, baseY + 0.5); ctx.stroke();
+    // Barre orizzontali conformità per argomento
+    let y = esitiH;
+    if (argsData.length) {
+      ctx.fillStyle = '#1f2330'; ctx.font = 'bold 15px "Segoe UI", Arial';
+      ctx.fillText('Conformità per Argomento', 10, y + 24);
+      y += argHeaderH;
+      const trackX = 12, trackW = W - 80;
+      argsData.forEach(a => {
+        const col = a.pct >= 85 ? '#3ecf8e' : a.pct >= 60 ? '#f5a623' : '#ff5c5c';
+        ctx.fillStyle = '#1f2330'; ctx.font = '11px "Segoe UI", Arial'; ctx.textAlign = 'left';
+        let lab = a.titolo; if (lab.length > 62) lab = lab.slice(0, 60) + '…';
+        ctx.fillText(lab, trackX, y + 10);
+        ctx.fillStyle = '#e6e9ef'; ctx.fillRect(trackX, y + 16, trackW, 12);
+        if (a.has) { ctx.fillStyle = col; ctx.fillRect(trackX, y + 16, Math.round(trackW * a.pct / 100), 12); }
+        ctx.fillStyle = col; ctx.font = 'bold 11px "Segoe UI", Arial'; ctx.textAlign = 'right';
+        ctx.fillText(a.has ? a.pct + '%' : 'n.d.', W - 12, y + 26);
+        y += argRowH;
+      });
+    }
+    const b64 = cv.toDataURL('image/png').split(',')[1], bin = atob(b64);
+    chartImgBytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) chartImgBytes[i] = bin.charCodeAt(i);
+    const emuW = Math.round(W * 9525), emuH = Math.round(H * 9525);
+    chartDrawingXml = `<w:p><w:pPr><w:spacing w:before="200" w:after="120"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${emuW}" cy="${emuH}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Grafici"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="Grafici"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId100"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emuW}" cy="${emuH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+  } catch (e) { chartImgBytes = null; chartDrawingXml = ''; }
 
-  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>
   ${para('REPORT AUDIT CANTIERE', { bold: true, size: 32, color: 'F5A623', spAfter: 100 })}
   ${para(cl.moduloTitolo, { bold: true, size: 24, spAfter: 60 })}
   ${para(`Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, { bold: true, size: 22, color: cl.chiusa ? (cl.esito === 'OK' ? '1a7a4a' : 'c0392b') : 'b7770d', spAfter: 160 })}
@@ -1293,8 +1326,7 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[2125, 2125, 2125, 2125].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
   ${trow([{ t: 'Conformi' }, { t: 'Non conformi' }, { t: 'N/A' }, { t: 'Da verificare' }], true)}
   ${trow([{ t: String(ok), c: '1a7a4a', b: true }, { t: String(no), c: 'c0392b', b: true }, { t: String(na), b: true }, { t: String(nd), c: 'd35400', b: true }])}</w:tbl>
-  ${esitiChartXml}
-  ${argChartXml}
+  ${chartDrawingXml}
   ${persSection}
   ${para(' ', { spBefore: 60, spAfter: 40 })}
   ${para('Check Points per Argomento', { bold: true, size: 22, spAfter: 80 })}
@@ -1313,10 +1345,13 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
   const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
   const entry = (name, data) => { const nb = enc.encode(name); const crc = crc32(data); const local = new Uint8Array([0x50, 0x4B, 0x03, 0x04, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nb.length), 0, 0, ...nb]); return { nb, data, crc, local, offset: 0 }; };
   const buildZip = entries => { let off = 0; const parts = [], cents = []; for (const e of entries) { e.offset = off; parts.push(e.local, e.data); off += e.local.length + e.data.length; cents.push(new Uint8Array([0x50, 0x4B, 0x01, 0x02, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(e.crc), ...u32(e.data.length), ...u32(e.data.length), ...u16(e.nb.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(e.offset), ...e.nb])); } const cdSize = cents.reduce((s, c) => s + c.length, 0); const eocd = new Uint8Array([0x50, 0x4B, 0x05, 0x06, 0, 0, 0, 0, ...u16(entries.length), ...u16(entries.length), ...u32(cdSize), ...u32(off), 0, 0]); const total = parts.reduce((s, p) => s + p.length, 0) + cdSize + eocd.length; const out = new Uint8Array(total); let pos = 0; const w = b => { out.set(b, pos); pos += b.length; }; parts.forEach(w); cents.forEach(w); w(eocd); return out; };
-  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
-  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
-  const bytes = buildZip([entry('[Content_Types].xml', toB(ct)), entry('_rels/.rels', toB(rels)), entry('word/document.xml', toB(docXml)), entry('word/_rels/document.xml.rels', toB(wrels))]);
+  const imgRel = chartImgBytes ? `<Relationship Id="rId100" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/chart.png"/>` : '';
+  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${imgRel}</Relationships>`;
+  const zipEntries = [entry('[Content_Types].xml', toB(ct)), entry('_rels/.rels', toB(rels)), entry('word/document.xml', toB(docXml)), entry('word/_rels/document.xml.rels', toB(wrels))];
+  if (chartImgBytes) zipEntries.push(entry('word/media/chart.png', chartImgBytes));
+  const bytes = buildZip(zipEntries);
   const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
   a.download = `Report_${cl.moduloTitolo.replace(/\s+/g, '_')}_${cl.data.replace(/\//g, '-')}.docx`;
