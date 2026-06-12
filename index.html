@@ -107,7 +107,7 @@ h3{font-size:16px;font-weight:700}
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const KEY = 'cantiere_v5';
 let DB = { moduli: [], checkLists: [] };
-let VIEW = 'home'; // home | nuovo-mod | mod-detail | nuova-cl | cl-detail | cp-detail | report
+let VIEW = 'dashboard'; // dashboard | home | nuovo-mod | mod-detail | nuova-cl | cl-detail | cp-detail | report | kpi
 let SEL = { modId: null, clId: null, argId: null, cpId: null };
 let HOME_TAB = 'cl';
 let HOME_FILTER = 'tutte';
@@ -220,7 +220,9 @@ const renderTopbar = () => {
     if (fn) { const a = span({ className: 'crumb', onClick: fn }, text); bc.appendChild(a); }
     else bc.appendChild(span({ className: 'crumb-cur' }, text));
   };
-  if (VIEW !== 'home') add('Home', () => go('home'));
+  if (VIEW !== 'dashboard') add('Dashboard', () => go('dashboard'));
+  if (['cl-detail', 'nuova-cl', 'cp-detail', 'report'].includes(VIEW)) add('Check List', () => { HOME_TAB = 'cl'; go('home'); });
+  if (VIEW === 'kpi') add('KPI', null);
   if (['mod-detail', 'nuovo-mod'].includes(VIEW)) add(getMod()?.titolo || 'Modulo', null);
   if (['cl-detail', 'nuova-cl', 'cp-detail', 'report'].includes(VIEW)) {
     const cl = getCL();
@@ -230,7 +232,7 @@ const renderTopbar = () => {
   if (VIEW === 'report') add('Report', null);
 };
 
-document.getElementById('logo').addEventListener('click', () => go('home'));
+document.getElementById('logo').addEventListener('click', () => go('dashboard'));
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
 const render = () => {
@@ -238,9 +240,115 @@ const render = () => {
   const app = document.getElementById('app');
   app.innerHTML = '';
   document.getElementById('modal-root').innerHTML = '';
-  const views = { home: renderHome, 'nuovo-mod': renderNuovoMod, 'mod-detail': renderModDetail, 'nuova-cl': renderNuovaCL, 'cl-detail': renderCLDetail, 'cp-detail': renderCPDetail, report: renderReport };
+  const views = { dashboard: renderDashboard, home: renderHome, 'nuovo-mod': renderNuovoMod, 'mod-detail': renderModDetail, 'nuova-cl': renderNuovaCL, 'cl-detail': renderCLDetail, 'cp-detail': renderCPDetail, report: renderReport, kpi: renderKPI };
   const v = views[VIEW];
   if (v) app.appendChild(v());
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD (schermata iniziale)
+// ══════════════════════════════════════════════════════════════════════════════
+const renderDashboard = () => {
+  const root = div({ className: 'fade', style: { minHeight: '68vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '30px' } });
+  const title = div({ style: { textAlign: 'center' } });
+  title.appendChild(el('h1', { style: { fontSize: '26px', marginBottom: '6px' } }, '🏗 Checklist Cantiere'));
+  title.appendChild(div({ className: 'muted small' }, 'Cosa vuoi fare?'));
+  root.appendChild(title);
+  const row = div({ className: 'flex', style: { gap: '20px', justifyContent: 'center', flexWrap: 'wrap' } });
+  const bigBtn = (icon, label, sub, color, onClick) => {
+    const c = div({ style: { width: '200px', minHeight: '170px', background: 'var(--card)', border: '1px solid var(--border)', borderTop: `4px solid ${color}`, borderRadius: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer', padding: '20px', transition: 'transform .12s, border-color .2s' } });
+    c.addEventListener('mouseenter', () => { c.style.transform = 'translateY(-3px)'; c.style.borderColor = color; });
+    c.addEventListener('mouseleave', () => { c.style.transform = 'none'; c.style.borderColor = 'var(--border)'; });
+    c.addEventListener('click', onClick);
+    c.appendChild(div({ style: { fontSize: '44px' } }, icon));
+    c.appendChild(div({ style: { fontWeight: '700', fontSize: '16px', textAlign: 'center' } }, label));
+    c.appendChild(div({ className: 'xsmall muted', style: { textAlign: 'center', lineHeight: '1.3' } }, sub));
+    return c;
+  };
+  row.appendChild(bigBtn('📋', 'Vai alla Check', 'Apri ed esegui le check list', 'var(--accent)', () => { HOME_TAB = 'cl'; go('home'); }));
+  row.appendChild(bigBtn('🗂', 'Crea Modulo', 'Crea un nuovo modulo di controllo', 'var(--accent2)', () => go('nuovo-mod')));
+  row.appendChild(bigBtn('📊', 'KPI', 'Statistiche e indicatori', 'var(--info)', () => go('kpi')));
+  root.appendChild(row);
+  return root;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// KPI
+// ══════════════════════════════════════════════════════════════════════════════
+const renderKPI = () => {
+  const root = div({ className: 'fade' });
+  root.appendChild(el('h2', { style: { marginBottom: '16px' } }, '📊 KPI — Indicatori di Qualità'));
+  const cls = DB.checkLists;
+  if (cls.length === 0) {
+    root.appendChild(div({ style: { textAlign: 'center', color: 'var(--muted)', padding: '50px 0' } },
+      div({ style: { fontSize: '36px', marginBottom: '10px' } }, '📊'),
+      div({ style: { fontWeight: '700', marginBottom: '6px' } }, 'Nessun dato ancora'),
+      div({ className: 'small' }, 'Esegui qualche check list per vedere gli indicatori')));
+    root.appendChild(div({ className: 'mt20' }, btn('btn-ghost', '← Dashboard', () => go('dashboard'))));
+    return root;
+  }
+  const allCP = cls.flatMap(c => c.argomenti.flatMap(a => a.checkPoints));
+  const ok = allCP.filter(p => p.esito === 'OK').length;
+  const no = allCP.filter(p => p.esito === 'NO').length;
+  const na = allCP.filter(p => p.esito === 'N/A').length;
+  const valut = ok + no;
+  const conf = valut ? Math.round(ok / valut * 100) : 0;
+  const confCol = conf >= 85 ? 'var(--accent2)' : conf >= 60 ? 'var(--accent)' : 'var(--danger)';
+  const aperte = cls.filter(c => !c.chiusa).length;
+  const chiuse = cls.filter(c => c.chiusa).length;
+  const allNC = allCP.filter(p => p.nc).map(p => p.nc);
+  const ncAperte = allNC.filter(n => n.stato !== 'Chiusa').length;
+  const ncLav = allNC.filter(n => n.stato === 'In lavorazione').length;
+  const ncChiuse = allNC.filter(n => n.stato === 'Chiusa').length;
+  const ncEff = allNC.filter(n => n.giorniEffettivi).map(n => Number(n.giorniEffettivi));
+  const ncEffAvg = ncEff.length ? Math.round(ncEff.reduce((s, x) => s + x, 0) / ncEff.length) : null;
+  const allAnom = allCP.flatMap(p => p.anomalie || []);
+  const totMin = allAnom.reduce((s, a) => s + Number(a.minuti || 0), 0);
+  const seg = allCP.filter(p => p.segnalazione).length;
+
+  const card4 = (items) => {
+    const g = div({ className: 'grid4 mb16' });
+    items.forEach(([l, v, c, sub]) => {
+      const cc = div({ className: 'card' });
+      cc.appendChild(div({ style: { fontSize: '26px', fontWeight: '700', color: c || 'var(--text)' } }, String(v)));
+      cc.appendChild(div({ className: 'small muted mt8' }, l));
+      if (sub) cc.appendChild(div({ className: 'xsmall muted' }, sub));
+      g.appendChild(cc);
+    });
+    return g;
+  };
+  root.appendChild(card4([
+    ['Audit totali', cls.length, 'var(--text)', `${aperte} aperti · ${chiuse} chiusi`],
+    ['Conformità media', conf + '%', confCol, `${ok}/${valut} punti`],
+    ['NC aperte', ncAperte, ncAperte ? 'var(--danger)' : 'var(--accent2)', `${ncChiuse} chiuse`],
+    ['Tempo perso', totMin + ' min', totMin ? 'var(--accent)' : 'var(--text)', `${allAnom.length} anomalie`]
+  ]));
+  root.appendChild(card4([
+    ['Punti controllati', ok + no + na, 'var(--text)', `su ${allCP.length}`],
+    ['Non conformi', no, no ? 'var(--danger)' : 'var(--accent2)', 'punti NO'],
+    ['Segnalazioni', seg, seg ? 'var(--purple)' : 'var(--text)', ''],
+    ['Giorni medi chiusura NC', ncEffAvg == null ? '—' : ncEffAvg, 'var(--info)', 'NC chiuse']
+  ]));
+
+  const histo = (title, data) => {
+    const wrap = div({});
+    wrap.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, title));
+    const maxV = Math.max(1, ...data.map(d => d[1]));
+    const box = div({ style: { display: 'flex', alignItems: 'flex-end', gap: '16px', height: '170px', padding: '12px 16px 0', background: 'var(--surface)', borderRadius: '8px', marginBottom: '20px' } });
+    data.forEach(([label, val, color]) => {
+      const col = div({ style: { flex: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', gap: '6px' } });
+      col.appendChild(div({ style: { fontWeight: '700', fontSize: '15px', color } }, String(val)));
+      col.appendChild(div({ style: { width: '100%', maxWidth: '64px', height: Math.round(val / maxV * 110) + 'px', minHeight: val > 0 ? '4px' : '0px', background: color, borderRadius: '6px 6px 0 0' } }));
+      col.appendChild(div({ className: 'xsmall muted', style: { textAlign: 'center', minHeight: '26px', lineHeight: '1.2' } }, label));
+      box.appendChild(col);
+    });
+    wrap.appendChild(box);
+    return wrap;
+  };
+  root.appendChild(histo('Esiti complessivi (tutti gli audit)', [['Conformi', ok, 'var(--accent2)'], ['Non conformi', no, 'var(--danger)'], ['N/A', na, 'var(--muted)']]));
+  if (allNC.length) root.appendChild(histo('Non Conformità per stato', [['Aperte', allNC.filter(n => n.stato === 'Aperta').length, 'var(--danger)'], ['In lavoraz.', ncLav, 'var(--accent)'], ['Chiuse', ncChiuse, 'var(--accent2)']]));
+  root.appendChild(btn('btn-ghost', '← Dashboard', () => go('dashboard')));
+  return root;
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
