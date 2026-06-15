@@ -1007,6 +1007,7 @@ const renderAnomaliePanel = (cl, arg, cp, disabled) => {
     hdr.appendChild(badge(a.stato === 'Chiusa' ? 'b-ok' : 'b-no', a.stato));
     if (a.minuti > 0) hdr.appendChild(span({ className: 'xsmall muted' }, `⏱ ${a.minuti} min`));
     if (!disabled) hdr.appendChild(btn('btn-sm ' + (a.stato === 'Chiusa' ? 'btn-ghost' : 'btn-success'), a.stato === 'Chiusa' ? 'Riapri' : 'Chiudi', () => { a.stato = a.stato === 'Chiusa' ? 'Aperta' : 'Chiusa'; save(); render(); }));
+    if (!disabled) hdr.appendChild(btn('btn-sm btn-danger', '🗑 Elimina', () => { if (confirm('Eliminare questa anomalia?')) { cp.anomalie.splice(i, 1); save(); render(); } }));
     item.appendChild(hdr);
     if (!disabled) {
       const ta = textarea({ style: { minHeight: '50px', fontSize: '12px' } }); ta.value = a.anomalia;
