@@ -164,7 +164,7 @@ const readFile = f => new Promise((res, rej) => {
 // ─── FACTORY ──────────────────────────────────────────────────────────────────
 const newModulo = m => ({ id: uid(), matricola: m.matricola || '', titolo: m.titolo || '', edizione: m.edizione || '1', revisione: m.revisione || '0', denominazione: m.denominazione || '', argomenti: [], creato: oggi() });
 const newArgomento = t => ({ id: uid(), titolo: t, points: [] });
-const newCP = (n, point) => ({ id: uid(), n, point, esito: '—', note: '', allegati: [], nc: null, segnalazione: null, anomalie: [] });
+const newCP = (n, point) => ({ id: uid(), n, point, esito: '—', note: '', allegati: [], nc: null, segnalazione: null, anomalie: [], personaleId: null });
 const newCheckList = (mod, meta) => ({
   id: uid(), moduloId: mod.id, moduloTitolo: mod.titolo, moduloMatricola: mod.matricola,
   ambito: meta.ambito || '', oggetto: meta.oggetto || '', postazione: meta.postazione || '',
@@ -912,6 +912,23 @@ const renderCPDetail = () => {
   topRow.appendChild(esitoRow);
   hdr.appendChild(topRow);
 
+  // Verificato con (override opzionale per il singolo punto)
+  if (personale.length > 0) {
+    const pvRow = div({ className: 'flex mt12', style: { alignItems: 'center', gap: '8px' } });
+    pvRow.appendChild(span({ className: 'xsmall muted bold', style: { textTransform: 'uppercase', letterSpacing: '.06em' } }, 'Verificato con'));
+    if (!disabled) {
+      const sel = el('select', { style: { maxWidth: '280px', fontSize: '12px', padding: '4px 8px', background: 'var(--card)' } });
+      sel.appendChild(el('option', { value: '' }, argPersona ? `Come argomento (${argPersona.nominativo})` : '— Nessuno —'));
+      personale.forEach(p => { const o = el('option', { value: p.id }, `${p.nominativo}${p.mansione ? ` (${p.mansione})` : ''}`); if (cp.personaleId === p.id) o.selected = true; sel.appendChild(o); });
+      sel.addEventListener('change', e => { cp.personaleId = e.target.value || null; save(); render(); });
+      pvRow.appendChild(sel);
+    } else {
+      const pv = personale.find(p => p.id === cp.personaleId);
+      pvRow.appendChild(span({ className: 'small', style: { color: 'var(--accent2)' } }, pv ? `${pv.nominativo}${pv.mansione ? ` (${pv.mansione})` : ''}` : (argPersona ? `${argPersona.nominativo} (da argomento)` : '—')));
+    }
+    hdr.appendChild(pvRow);
+  }
+
   // Action buttons
   const actions = div({ className: 'flex mt12' });
   const noteBtn = iconBtn(cp.note?.trim() ? 'on-note' : '', `✎ Note${cp.note?.trim() ? ' ●' : ''}`, () => togglePanel('note'));
@@ -1265,6 +1282,7 @@ const renderReport = () => {
       row.appendChild(span({ className: 'xsmall muted', style: { minWidth: '22px' } }, String(i + 1).padStart(2, '0')));
       const info = div({ style: { flex: '1' } });
       info.appendChild(div({ style: { fontSize: '13px' } }, p.point));
+      if (p.personaleId && p.personaleId !== arg.personaleId) { const pv = getNome(p.personaleId); if (pv) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--accent2)', marginTop: '2px' } }, `👤 ${pv.nominativo}${pv.mansione ? ` (${pv.mansione})` : ''}`)); }
       if (p.note) info.appendChild(div({ className: 'xsmall muted', style: { marginTop: '2px', fontStyle: 'italic' } }, `✎ ${p.note}`));
       if (p.nc) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--info)', marginTop: '2px' } }, `📋 ${p.nc.numero} [${p.nc.stato}]${p.nc.giorniPrevisti ? ` Prev:${p.nc.giorniPrevisti}gg` : ''}${p.nc.giorniEffettivi ? ` Eff:${p.nc.giorniEffettivi}gg` : ''}`));
       if (p.segnalazione) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--purple)', marginTop: '2px' } }, `🚩 ${p.segnalazione.numero} ${p.segnalazione.priorita}`));
@@ -1326,7 +1344,7 @@ const renderReport = () => {
       `Auditor: ${cl.persona || '—'} | Oggetto: ${cl.oggetto || '—'}`, `Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, '',
       personale.length ? [`--- PERSONALE (${personale.length}) ---`, ...personale.map(p => `  ${p.nominativo || '—'} — ${p.mansione || '—'}`)].join('\n') : '',
       `--- CHECK POINTS (${ok} OK | ${no} NO | ${na} N/A | ${nd} —) ---`,
-      ...cl.argomenti.map(arg => { const pers = getNome(arg.personaleId); return [`\n[${arg.titolo.toUpperCase()}]${pers ? ` — Interv: ${pers.nominativo}` : ''}`, ...arg.checkPoints.map(p => [`  [${p.esito}] ${p.n}. ${p.point}`, p.note ? `     Note: ${p.note}` : '', p.nc ? `     NC ${p.nc.numero} [${p.nc.stato}]` : '', p.segnalazione ? `     SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join('\n'))].join('\n'); }),
+      ...cl.argomenti.map(arg => { const pers = getNome(arg.personaleId); return [`\n[${arg.titolo.toUpperCase()}]${pers ? ` — Interv: ${pers.nominativo}` : ''}`, ...arg.checkPoints.map(p => [`  [${p.esito}] ${p.n}. ${p.point}`, (p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? `     Verif. con: ${getNome(p.personaleId).nominativo}` : '', p.note ? `     Note: ${p.note}` : '', p.nc ? `     NC ${p.nc.numero} [${p.nc.stato}]` : '', p.segnalazione ? `     SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join('\n'))].join('\n'); }),
       '', ptsNC.length ? [`--- NC (${ptsNC.length}) ---`, ...ptsNC.map(p => `  ${p.nc.numero} [${p.nc.stato}] [${p.argTitolo}]\n    ${p.nc.descrizione}\n    Resp: ${p.nc.responsabile || '—'} | Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg`)].join('\n') : '',
       '', allAnom.length ? [`--- ANOMALIE (${allAnom.length}) | ${totMin}min ---`, ...allAnom.map((a, i) => `  ${i + 1}. [${a.argTitolo}·Pt.${a.puntoN}] [${a.stato}] ${a.anomalia}`)].join('\n') : '',
       '', '=== FINE ==='
@@ -1362,7 +1380,7 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
       para(`${arg.titolo}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
       `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="7300"/><w:gridCol w:w="800"/></w:tblGrid>`,
       trow([{ t: 'N.', w: 400 }, { t: 'Punto di Controllo', w: 7300 }, { t: 'Esito', w: 800 }], true),
-      ...arg.checkPoints.map(p => { const ex = [p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
+      ...arg.checkPoints.map(p => { const ex = [(p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? 'Verif. con: ' + getNome(p.personaleId).nominativo : '', p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
       '</w:tbl>'
     ].join('');
   }).join('');
