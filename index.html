@@ -1238,13 +1238,14 @@ const renderReport = () => {
     cl.argomenti.forEach((arg, ai) => {
       const cps = arg.checkPoints;
       const aOk = cps.filter(p => p.esito === 'OK').length;
-      const aValut = cps.filter(p => p.esito === 'OK' || p.esito === 'NO').length;
-      const aPct = aValut ? Math.round(aOk / aValut * 100) : 0;
+      const aNa = cps.filter(p => p.esito === 'N/A').length;
+      const aApp = cps.length - aNa;
+      const aPct = aApp ? Math.round(aOk / aApp * 100) : 0;
       const col = aPct >= 85 ? 'var(--accent2)' : aPct >= 60 ? 'var(--accent)' : 'var(--danger)';
       const rowW = div({});
       const top = div({ className: 'flex', style: { justifyContent: 'space-between', marginBottom: '5px' } });
       top.appendChild(span({ className: 'xsmall', style: { fontWeight: '600' } }, `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`));
-      top.appendChild(span({ className: 'xsmall bold', style: { color: col } }, aValut ? `${aPct}% (${aOk}/${aValut})` : 'n.d.'));
+      top.appendChild(span({ className: 'xsmall bold', style: { color: col } }, aApp ? `${aPct}% (${aOk}/${aApp})` : 'n.d.'));
       rowW.appendChild(top);
       const track = div({ style: { height: '14px', background: 'var(--bg)', borderRadius: '7px', overflow: 'hidden' } });
       track.appendChild(div({ style: { height: '100%', width: aPct + '%', background: col, borderRadius: '7px', transition: 'width .4s' } }));
@@ -1396,8 +1397,9 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
     const argsData = cl.argomenti.map((arg, ai) => {
       const cps = arg.checkPoints;
       const aOk = cps.filter(p => p.esito === 'OK').length;
-      const aVal = cps.filter(p => p.esito === 'OK' || p.esito === 'NO').length;
-      return { titolo: `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`, pct: aVal ? Math.round(aOk / aVal * 100) : 0, has: aVal > 0 };
+      const aNa = cps.filter(p => p.esito === 'N/A').length;
+      const aApp = cps.length - aNa;
+      return { titolo: `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`, pct: aApp ? Math.round(aOk / aApp * 100) : 0, has: aApp > 0 };
     });
     const W = 620, esitiH = 230, argHeaderH = argsData.length ? 46 : 0, argRowH = 34;
     const H = esitiH + argHeaderH + argsData.length * argRowH + 16;
