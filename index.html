@@ -114,6 +114,7 @@ let VIEW = 'dashboard'; // dashboard | home | nuovo-mod | mod-detail | nuova-cl 
 let SEL = { modId: null, clId: null, argId: null, cpId: null };
 let HOME_TAB = 'cl';
 let HOME_FILTER = 'tutte';
+let pendingScrollArg = null;
 
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return null; } };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch {} };
@@ -231,7 +232,7 @@ const renderTopbar = () => {
   if (['mod-detail', 'nuovo-mod'].includes(VIEW)) add(getMod()?.titolo || 'Modulo', null);
   if (['cl-detail', 'nuova-cl', 'cp-detail', 'report'].includes(VIEW)) {
     const cl = getCL();
-    if (cl) { add(cl.moduloTitolo, null); add(`${cl.postazione} — ${cl.data}`, VIEW === 'cp-detail' || VIEW === 'report' ? () => go('cl-detail') : null); }
+    if (cl) { add(cl.moduloTitolo, null); add(`${cl.postazione} — ${cl.data}`, VIEW === 'cp-detail' || VIEW === 'report' ? () => { pendingScrollArg = SEL.argId; go('cl-detail'); } : null); }
   }
   if (VIEW === 'cp-detail') { const arg = getArg(); const cp = getCP(); if (arg && cp) add(`${arg.titolo} · Pt.${cp.n}`, null); }
   if (VIEW === 'report') add('Report', null);
@@ -804,7 +805,7 @@ const renderCLDetail = () => {
     const argNC = arg.checkPoints.filter(p => p.nc && p.nc.stato !== 'Chiusa').length;
     const assegnato = personale.find(p => p.id === arg.personaleId);
 
-    const argHdr = div({ className: 'arg-hdr', style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: 'var(--surface)', borderRadius: '10px 10px 0 0', borderLeft: '3px solid var(--accent)', border: '1px solid var(--border)', borderBottom: 'none', flexWrap: 'wrap' } });
+    const argHdr = div({ id: 'arg-' + arg.id, className: 'arg-hdr', style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', background: 'var(--surface)', borderRadius: '10px 10px 0 0', borderLeft: '3px solid var(--accent)', border: '1px solid var(--border)', borderBottom: 'none', flexWrap: 'wrap' } });
     argHdr.appendChild(span({ style: { fontSize: '11px', color: 'var(--accent)', fontWeight: '700', minWidth: '22px' } }, String(ai + 1).padStart(2, '0')));
     argHdr.appendChild(span({ style: { fontWeight: '700', fontSize: '15px', flex: '1' } }, arg.titolo));
     if (personale.length > 0 && !cl.chiusa) {
@@ -826,6 +827,7 @@ const renderCLDetail = () => {
     root.appendChild(argBody);
   });
 
+  if (pendingScrollArg) { const target = pendingScrollArg; pendingScrollArg = null; setTimeout(() => { const e = document.getElementById('arg-' + target); if (e) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60); }
   return root;
 };
 
@@ -971,6 +973,17 @@ const renderCPDetail = () => {
     if (openPanel === 'files') panelContainer.appendChild(renderFilesPanel(cl, arg, cp, disabled));
     if (openPanel === 'anomalie') panelContainer.appendChild(renderAnomaliePanel(cl, arg, cp, disabled));
   };
+
+  // Navigazione tra i punti
+  const flat = cl.argomenti.flatMap(a => a.checkPoints.map(p => ({ argId: a.id, cpId: p.id })));
+  const idx = flat.findIndex(x => x.cpId === cp.id);
+  const prev = idx > 0 ? flat[idx - 1] : null;
+  const next = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
+  const navBar = div({ className: 'flex mt20', style: { gap: '8px', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' } });
+  navBar.appendChild(prev ? btn('btn-ghost', '← Punto precedente', () => go('cp-detail', { argId: prev.argId, cpId: prev.cpId })) : div({}));
+  navBar.appendChild(btn('btn-ghost btn-sm', '↩ Torna all\'argomento', () => { pendingScrollArg = arg.id; go('cl-detail'); }));
+  navBar.appendChild(next ? btn('btn-primary', 'Punto successivo →', () => go('cp-detail', { argId: next.argId, cpId: next.cpId })) : div({}));
+  root.appendChild(navBar);
 
   return root;
 };
