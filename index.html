@@ -143,6 +143,7 @@ const importDB = (file) => {
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
 const oggi = () => new Date().toLocaleDateString('it-IT');
+const fmtD = s => { if (!s) return ''; const p = s.split('-'); return (p.length === 3) ? `${p[2]}/${p[1]}/${p[0]}` : s; };
 const EC = { OK: 'var(--accent2)', NO: 'var(--danger)', 'N/A': 'var(--muted)', '—': 'var(--muted)' };
 const EH = { OK: '1a7a4a', NO: 'c0392b', 'N/A': '777777', '—': 'aaaaaa' };
 const EK = { OK: 'b-ok', NO: 'b-no', 'N/A': 'b-na', '—': 'b-na' };
@@ -480,7 +481,7 @@ const renderModCard = mod => {
   row1.appendChild(span({ className: 'xsmall muted' }, `Ed.${mod.edizione} Rev.${mod.revisione}`));
   info.appendChild(row1);
   info.appendChild(div({ className: 'small muted' }, `${mod.argomenti.length} argomenti · ${totPt} punti · Creato ${mod.creato}`));
-  if (mod.dataInizio || mod.dataFine) info.appendChild(div({ className: 'xsmall muted' }, `📅 Pianificato: ${mod.dataInizio || '?'} → ${mod.dataFine || '?'}`));
+  if (mod.dataInizio || mod.dataFine) info.appendChild(div({ className: 'xsmall muted' }, `📅 Pianificato: ${fmtD(mod.dataInizio) || '?'} → ${fmtD(mod.dataFine) || '?'}`));
   card.appendChild(info);
   const dupBtn = btn('btn-ghost btn-sm', '⧉ Duplica', e => {
     e.stopPropagation();
@@ -523,8 +524,8 @@ const renderNuovoMod = () => {
   fields.appendChild(g2);
   mkInp('Denominazione / Emittente', 'denominazione', 'es. Ufficio Qualità');
   const g3 = div({ className: 'grid2' });
-  const iDi = input({ placeholder: 'gg/mm/aaaa' }); iDi.addEventListener('input', e => f.dataInizio = e.target.value);
-  const iDf = input({ placeholder: 'gg/mm/aaaa' }); iDf.addEventListener('input', e => f.dataFine = e.target.value);
+  const iDi = input({ type: 'date' }); iDi.addEventListener('input', e => f.dataInizio = e.target.value);
+  const iDf = input({ type: 'date' }); iDf.addEventListener('input', e => f.dataFine = e.target.value);
   g3.appendChild(fieldGroup('📅 Data inizio (pianificata)', iDi)); g3.appendChild(fieldGroup('📅 Data fine (pianificata)', iDf));
   fields.appendChild(g3);
   card.appendChild(fields);
@@ -558,7 +559,7 @@ const renderModDetail = () => {
   const hdrLeft = div({});
   hdrLeft.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '4px' } }, 'Modulo di Controllo'));
   hdrLeft.appendChild(el('h2', { style: { marginBottom: '6px' } }, mod.titolo));
-  hdrLeft.appendChild(div({ className: 'flex small muted' }, ...[mod.matricola || '—', `Ed.${mod.edizione} Rev.${mod.revisione}`, mod.denominazione, (mod.dataInizio || mod.dataFine) ? `📅 ${mod.dataInizio || '?'} → ${mod.dataFine || '?'}` : '', `${mod.argomenti.length} arg · ${totPt} punti`].filter(Boolean).map(t => span({}, t))));
+  hdrLeft.appendChild(div({ className: 'flex small muted' }, ...[mod.matricola || '—', `Ed.${mod.edizione} Rev.${mod.revisione}`, mod.denominazione, (mod.dataInizio || mod.dataFine) ? `📅 ${fmtD(mod.dataInizio) || '?'} → ${fmtD(mod.dataFine) || '?'}` : '', `${mod.argomenti.length} arg · ${totPt} punti`].filter(Boolean).map(t => span({}, t))));
   hdrRow.appendChild(hdrLeft);
   hdrRow.appendChild(btn('btn-success', '▶ Lancia Check List', () => showLanciaModal(mod)));
   hdr.appendChild(hdrRow);
@@ -570,7 +571,8 @@ const renderModDetail = () => {
   const g = div({ className: 'grid2' });
   const mkF = (lbl, key) => { const i = input({ value: mod[key] || '' }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
   mkF('Titolo', 'titolo'); mkF('Matricola', 'matricola'); mkF('Edizione', 'edizione'); mkF('Revisione', 'revisione'); mkF('Denominazione', 'denominazione');
-  mkF('📅 Data inizio (pianificata)', 'dataInizio'); mkF('📅 Data fine (pianificata)', 'dataFine');
+  const mkD = (lbl, key) => { const i = input({ type: 'date', value: mod[key] || '' }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
+  mkD('📅 Data inizio (pianificata)', 'dataInizio'); mkD('📅 Data fine (pianificata)', 'dataFine');
   dati.appendChild(g);
   root.appendChild(dati);
 
@@ -1206,7 +1208,7 @@ const renderReport = () => {
 
   // Meta
   const metaGrid = div({ className: 'grid2 mb20' });
-  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${cl.dataInizio || '?'} → ${cl.dataFine || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
+  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${fmtD(cl.dataInizio) || '?'} → ${fmtD(cl.dataFine) || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
     const c = div({ style: { padding: '10px 14px', background: 'var(--surface)', borderRadius: '8px' } });
     c.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', marginBottom: '3px' } }, k));
     c.appendChild(div({ style: { fontSize: '13px', fontWeight: '600' } }, v));
@@ -1468,7 +1470,7 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
   ${para(cl.moduloTitolo, { bold: true, size: 24, spAfter: 60 })}
   ${para(`Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, { bold: true, size: 22, color: cl.chiusa ? (cl.esito === 'OK' ? '1a7a4a' : 'c0392b') : 'b7770d', spAfter: 160 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="2000"/><w:gridCol w:w="6500"/></w:tblGrid>
-  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${cl.dataInizio || '?'} → ${cl.dataFine || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
+  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${fmtD(cl.dataInizio) || '?'} → ${fmtD(cl.dataFine) || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
   ${para(' ', { spBefore: 60, spAfter: 40 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[2125, 2125, 2125, 2125].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
   ${trow([{ t: 'Conformi' }, { t: 'Non conformi' }, { t: 'N/A' }, { t: 'Da verificare' }], true)}
