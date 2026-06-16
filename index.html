@@ -1272,10 +1272,15 @@ const renderReport = () => {
   card.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, 'Check Points per Argomento'));
   cl.argomenti.forEach((arg, ai) => {
     const pers = getNome(arg.personaleId);
+    const rOk = arg.checkPoints.filter(p => p.esito === 'OK').length;
+    const rApp = arg.checkPoints.length - arg.checkPoints.filter(p => p.esito === 'N/A').length;
+    const rPct = rApp ? Math.round(rOk / rApp * 100) : 0;
+    const rCol = rPct >= 85 ? 'var(--accent2)' : rPct >= 60 ? 'var(--accent)' : 'var(--danger)';
     const argWrapper = div({ style: { marginBottom: '16px' } });
     const argHdr = div({ style: { background: 'var(--surface)', padding: '8px 14px', borderRadius: '8px 8px 0 0', borderLeft: '3px solid var(--accent)', border: '1px solid var(--border)', borderBottom: 'none', display: 'flex', alignItems: 'center', gap: '12px' } });
     argHdr.appendChild(span({ style: { fontWeight: '700', fontSize: '13px', flex: '1' } }, `${String(ai + 1).padStart(2, '0')}. ${arg.titolo}`));
     if (pers) argHdr.appendChild(span({ className: 'xsmall', style: { color: 'var(--accent2)' } }, `👤 ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}`));
+    argHdr.appendChild(span({ className: 'xsmall bold', style: { color: rCol } }, rApp ? `${rPct}% (${rOk}/${rApp})` : 'n.d.'));
     argWrapper.appendChild(argHdr);
     const argBody = div({ style: { border: '1px solid var(--border)', borderTop: 'none', borderRadius: '0 0 8px 8px' } });
     arg.checkPoints.forEach((p, i) => {
@@ -1377,8 +1382,11 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
 
   const cpSection = cl.argomenti.map(arg => {
     const pers = getNome(arg.personaleId);
+    const rOk = arg.checkPoints.filter(p => p.esito === 'OK').length;
+    const rApp = arg.checkPoints.length - arg.checkPoints.filter(p => p.esito === 'N/A').length;
+    const rPct = rApp ? Math.round(rOk / rApp * 100) : 0;
     return [
-      para(`${arg.titolo}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
+      para(`${arg.titolo} — ${rApp ? rPct + '% conformità (' + rOk + '/' + rApp + ')' : 'n.d.'}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
       `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="7300"/><w:gridCol w:w="800"/></w:tblGrid>`,
       trow([{ t: 'N.', w: 400 }, { t: 'Punto di Controllo', w: 7300 }, { t: 'Esito', w: 800 }], true),
       ...arg.checkPoints.map(p => { const ex = [(p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? 'Verif. con: ' + getNome(p.personaleId).nominativo : '', p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
