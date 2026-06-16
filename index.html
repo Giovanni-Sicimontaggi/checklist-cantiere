@@ -167,7 +167,7 @@ const readFile = f => new Promise((res, rej) => {
 // ─── FACTORY ──────────────────────────────────────────────────────────────────
 const newModulo = m => ({ id: uid(), matricola: m.matricola || '', titolo: m.titolo || '', edizione: m.edizione || '1', revisione: m.revisione || '0', denominazione: m.denominazione || '', dataInizio: m.dataInizio || '', dataFine: m.dataFine || '', argomenti: [], creato: oggi() });
 const newArgomento = t => ({ id: uid(), titolo: t, points: [] });
-const newCP = (n, point) => ({ id: uid(), n, point, esito: '—', note: '', allegati: [], nc: null, segnalazione: null, anomalie: [], personaleId: null });
+const newCP = (n, point) => ({ id: uid(), n, point, esito: '—', note: '', noteAuditor: '', allegati: [], nc: null, segnalazione: null, anomalie: [], personaleId: null });
 const newCheckList = (mod, meta) => ({
   id: uid(), moduloId: mod.id, moduloTitolo: mod.titolo, moduloMatricola: mod.matricola,
   ambito: meta.ambito || '', oggetto: meta.oggetto || '', postazione: meta.postazione || '',
@@ -847,6 +847,7 @@ const renderCPRow = (cl, arg, cp, idx, isLast) => {
   if (hasSeg) badges.appendChild(badge('b-seg', `🚩 ${cp.segnalazione.priorita}`));
   if (anomN > 0) badges.appendChild(badge('b-no', `⚠ ${anomN}`));
   if (cp.note?.trim()) badges.appendChild(span({ className: 'xsmall', style: { color: 'var(--accent2)' } }, '✎'));
+  if (cp.noteAuditor?.trim()) badges.appendChild(span({ className: 'xsmall', style: { color: 'var(--accent2)' } }, '📑'));
   if ((cp.allegati || []).length > 0) badges.appendChild(span({ className: 'xsmall accent' }, `📎${(cp.allegati || []).length}`));
   row.appendChild(badges);
   const esitoRow = div({ className: 'flex' });
@@ -943,13 +944,14 @@ const renderCPDetail = () => {
   // Action buttons
   const actions = div({ className: 'flex mt12' });
   const noteBtn = iconBtn(cp.note?.trim() ? 'on-note' : '', `✎ Note${cp.note?.trim() ? ' ●' : ''}`, () => togglePanel('note'));
+  const noteAudBtn = iconBtn(cp.noteAuditor?.trim() ? 'on-note' : '', `📑 Note Auditor${cp.noteAuditor?.trim() ? ' ●' : ''}`, () => togglePanel('noteAuditor'));
   const fileBtn = iconBtn((cp.allegati || []).length > 0 ? 'on-file' : '', `📎 Allegati${(cp.allegati || []).length > 0 ? ` (${(cp.allegati || []).length})` : ''}`, () => togglePanel('files'));
   const ncBtnEl = iconBtn(cp.nc ? 'on-nc' : '', '', () => showNCModal(cl, arg, cp));
   const ncBtnText = document.createTextNode(`📋 ${cp.nc ? 'NC: ' + cp.nc.stato : 'Apri NC'}`);
   ncBtnEl.insertBefore(ncBtnText, ncBtnEl.firstChild);
   if (cp.nc && ncScad != null && cp.nc.stato !== 'Chiusa') ncBtnEl.appendChild(span({ style: { marginLeft: '4px', fontSize: '10px', color: ncScad < 0 ? 'var(--danger)' : ncScad <= 3 ? 'var(--accent)' : 'var(--info)' } }, ncScad < 0 ? `⚠ scad.${Math.abs(ncScad)}gg fa` : `⏱ ${ncScad}gg`));
   const segBtnEl = iconBtn(cp.segnalazione ? 'on-seg' : '', `🚩 ${cp.segnalazione ? 'Seg: ' + cp.segnalazione.priorita : 'Segnalazione'}`, () => showSegModal(cl, arg, cp));
-  actions.appendChild(noteBtn); actions.appendChild(fileBtn); actions.appendChild(ncBtnEl); actions.appendChild(segBtnEl);
+  actions.appendChild(noteBtn); actions.appendChild(noteAudBtn); actions.appendChild(fileBtn); actions.appendChild(ncBtnEl); actions.appendChild(segBtnEl);
   if (!disabled) {
     actions.appendChild(iconBtn('', '+ Anomalia', () => { cp.anomalie = cp.anomalie || []; cp.anomalie.push(newAnom()); save(); togglePanel('anomalie'); }));
   }
@@ -965,6 +967,7 @@ const renderCPDetail = () => {
     openPanel = openPanel === name ? null : name;
     panelContainer.innerHTML = '';
     if (openPanel === 'note') panelContainer.appendChild(renderNotePanel(cp, disabled));
+    if (openPanel === 'noteAuditor') panelContainer.appendChild(renderNoteAuditorPanel(cp, disabled));
     if (openPanel === 'files') panelContainer.appendChild(renderFilesPanel(cl, arg, cp, disabled));
     if (openPanel === 'anomalie') panelContainer.appendChild(renderAnomaliePanel(cl, arg, cp, disabled));
   };
@@ -978,6 +981,16 @@ const renderNotePanel = (cp, disabled) => {
   const ta = textarea({ placeholder: 'Note / osservazioni...', style: { fontSize: '13px', minHeight: '80px' } }); ta.value = cp.note || '';
   if (disabled) ta.disabled = true;
   ta.addEventListener('input', e => { cp.note = e.target.value; save(); });
+  p.appendChild(ta);
+  return p;
+};
+
+const renderNoteAuditorPanel = (cp, disabled) => {
+  const p = div({ className: 'panel' });
+  p.appendChild(div({ className: 'xsmall muted bold mb12', style: { textTransform: 'uppercase', letterSpacing: '.06em' } }, '📑 Note Auditor — Documentazione / evidenze verificate'));
+  const ta = textarea({ placeholder: 'Documenti ed evidenze esaminati, riferimenti, esito della verifica...', style: { fontSize: '13px', minHeight: '80px' } }); ta.value = cp.noteAuditor || '';
+  if (disabled) ta.disabled = true;
+  ta.addEventListener('input', e => { cp.noteAuditor = e.target.value; save(); });
   p.appendChild(ta);
   return p;
 };
@@ -1300,6 +1313,7 @@ const renderReport = () => {
       const info = div({ style: { flex: '1' } });
       info.appendChild(div({ style: { fontSize: '13px' } }, p.point));
       if (p.personaleId && p.personaleId !== arg.personaleId) { const pv = getNome(p.personaleId); if (pv) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--accent2)', marginTop: '2px' } }, `👤 ${pv.nominativo}${pv.mansione ? ` (${pv.mansione})` : ''}`)); }
+      if (p.noteAuditor) info.appendChild(div({ className: 'xsmall', style: { marginTop: '2px', color: 'var(--accent2)' } }, `📑 ${p.noteAuditor}`));
       if (p.note) info.appendChild(div({ className: 'xsmall muted', style: { marginTop: '2px', fontStyle: 'italic' } }, `✎ ${p.note}`));
       if (p.nc) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--info)', marginTop: '2px' } }, `📋 ${p.nc.numero} [${p.nc.stato}]${p.nc.giorniPrevisti ? ` Prev:${p.nc.giorniPrevisti}gg` : ''}${p.nc.giorniEffettivi ? ` Eff:${p.nc.giorniEffettivi}gg` : ''}`));
       if (p.segnalazione) info.appendChild(div({ className: 'xsmall', style: { color: 'var(--purple)', marginTop: '2px' } }, `🚩 ${p.segnalazione.numero} ${p.segnalazione.priorita}`));
@@ -1361,7 +1375,7 @@ const renderReport = () => {
       `Auditor: ${cl.persona || '—'} | Oggetto: ${cl.oggetto || '—'}`, `Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, '',
       personale.length ? [`--- PERSONALE (${personale.length}) ---`, ...personale.map(p => `  ${p.nominativo || '—'} — ${p.mansione || '—'}`)].join('\n') : '',
       `--- CHECK POINTS (${ok} OK | ${no} NO | ${na} N/A | ${nd} —) ---`,
-      ...cl.argomenti.map(arg => { const pers = getNome(arg.personaleId); return [`\n[${arg.titolo.toUpperCase()}]${pers ? ` — Interv: ${pers.nominativo}` : ''}`, ...arg.checkPoints.map(p => [`  [${p.esito}] ${p.n}. ${p.point}`, (p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? `     Verif. con: ${getNome(p.personaleId).nominativo}` : '', p.note ? `     Note: ${p.note}` : '', p.nc ? `     NC ${p.nc.numero} [${p.nc.stato}]` : '', p.segnalazione ? `     SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join('\n'))].join('\n'); }),
+      ...cl.argomenti.map(arg => { const pers = getNome(arg.personaleId); return [`\n[${arg.titolo.toUpperCase()}]${pers ? ` — Interv: ${pers.nominativo}` : ''}`, ...arg.checkPoints.map(p => [`  [${p.esito}] ${p.n}. ${p.point}`, (p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? `     Verif. con: ${getNome(p.personaleId).nominativo}` : '', p.noteAuditor ? `     Note Auditor: ${p.noteAuditor}` : '', p.note ? `     Note: ${p.note}` : '', p.nc ? `     NC ${p.nc.numero} [${p.nc.stato}]` : '', p.segnalazione ? `     SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join('\n'))].join('\n'); }),
       '', ptsNC.length ? [`--- NC (${ptsNC.length}) ---`, ...ptsNC.map(p => `  ${p.nc.numero} [${p.nc.stato}] [${p.argTitolo}]\n    ${p.nc.descrizione}\n    Resp: ${p.nc.responsabile || '—'} | Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg`)].join('\n') : '',
       '', allAnom.length ? [`--- ANOMALIE (${allAnom.length}) | ${totMin}min ---`, ...allAnom.map((a, i) => `  ${i + 1}. [${a.argTitolo}·Pt.${a.puntoN}] [${a.stato}] ${a.anomalia}`)].join('\n') : '',
       '', '=== FINE ==='
@@ -1400,7 +1414,7 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
       para(`${arg.titolo} — ${rApp ? rPct + '% conformità (' + rOk + '/' + rApp + ')' : 'n.d.'}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
       `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="7300"/><w:gridCol w:w="800"/></w:tblGrid>`,
       trow([{ t: 'N.', w: 400 }, { t: 'Punto di Controllo', w: 7300 }, { t: 'Esito', w: 800 }], true),
-      ...arg.checkPoints.map(p => { const ex = [(p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? 'Verif. con: ' + getNome(p.personaleId).nominativo : '', p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
+      ...arg.checkPoints.map(p => { const ex = [(p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? 'Verif. con: ' + getNome(p.personaleId).nominativo : '', p.noteAuditor ? 'Note Auditor: ' + p.noteAuditor : '', p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
       '</w:tbl>'
     ].join('');
   }).join('');
