@@ -162,13 +162,13 @@ const readFile = f => new Promise((res, rej) => {
 });
 
 // ─── FACTORY ──────────────────────────────────────────────────────────────────
-const newModulo = m => ({ id: uid(), matricola: m.matricola || '', titolo: m.titolo || '', edizione: m.edizione || '1', revisione: m.revisione || '0', denominazione: m.denominazione || '', argomenti: [], creato: oggi() });
+const newModulo = m => ({ id: uid(), matricola: m.matricola || '', titolo: m.titolo || '', edizione: m.edizione || '1', revisione: m.revisione || '0', denominazione: m.denominazione || '', dataInizio: m.dataInizio || '', dataFine: m.dataFine || '', argomenti: [], creato: oggi() });
 const newArgomento = t => ({ id: uid(), titolo: t, points: [] });
 const newCP = (n, point) => ({ id: uid(), n, point, esito: '—', note: '', allegati: [], nc: null, segnalazione: null, anomalie: [], personaleId: null });
 const newCheckList = (mod, meta) => ({
   id: uid(), moduloId: mod.id, moduloTitolo: mod.titolo, moduloMatricola: mod.matricola,
   ambito: meta.ambito || '', oggetto: meta.oggetto || '', postazione: meta.postazione || '',
-  persona: meta.persona || '', data: oggi(), esito: '—', chiusa: false,
+  persona: meta.persona || '', data: oggi(), dataInizio: mod.dataInizio || '', dataFine: mod.dataFine || '', esito: '—', chiusa: false,
   personale: [],
   argomenti: mod.argomenti.map(a => ({ id: uid(), titolo: a.titolo, personaleId: null, checkPoints: a.points.map((pt, i) => newCP(i + 1, pt.testo)) }))
 });
@@ -480,6 +480,7 @@ const renderModCard = mod => {
   row1.appendChild(span({ className: 'xsmall muted' }, `Ed.${mod.edizione} Rev.${mod.revisione}`));
   info.appendChild(row1);
   info.appendChild(div({ className: 'small muted' }, `${mod.argomenti.length} argomenti · ${totPt} punti · Creato ${mod.creato}`));
+  if (mod.dataInizio || mod.dataFine) info.appendChild(div({ className: 'xsmall muted' }, `📅 Pianificato: ${mod.dataInizio || '?'} → ${mod.dataFine || '?'}`));
   card.appendChild(info);
   const dupBtn = btn('btn-ghost btn-sm', '⧉ Duplica', e => {
     e.stopPropagation();
@@ -500,7 +501,7 @@ const renderNuovoMod = () => {
   const root = div({ className: 'fade', style: { maxWidth: '560px', margin: '0 auto' } });
   const card = div({ className: 'card' });
   card.appendChild(el('h2', { style: { marginBottom: '20px' } }, 'Nuovo Modulo di Controllo'));
-  const f = { titolo: '', matricola: '', edizione: '1', revisione: '0', denominazione: '' };
+  const f = { titolo: '', matricola: '', edizione: '1', revisione: '0', denominazione: '', dataInizio: '', dataFine: '' };
   const fields = div({ className: 'flex-col' });
   // ── Copia da modulo esistente (opzionale) ──
   let copiaSrcId = '';
@@ -521,6 +522,11 @@ const renderNuovoMod = () => {
   g2.appendChild(fieldGroup('Edizione', iEd)); g2.appendChild(fieldGroup('Revisione', iRev));
   fields.appendChild(g2);
   mkInp('Denominazione / Emittente', 'denominazione', 'es. Ufficio Qualità');
+  const g3 = div({ className: 'grid2' });
+  const iDi = input({ placeholder: 'gg/mm/aaaa' }); iDi.addEventListener('input', e => f.dataInizio = e.target.value);
+  const iDf = input({ placeholder: 'gg/mm/aaaa' }); iDf.addEventListener('input', e => f.dataFine = e.target.value);
+  g3.appendChild(fieldGroup('📅 Data inizio (pianificata)', iDi)); g3.appendChild(fieldGroup('📅 Data fine (pianificata)', iDf));
+  fields.appendChild(g3);
   card.appendChild(fields);
   const btns = div({ className: 'flex mt20' });
   btns.appendChild(btn('btn-primary', 'Crea Modulo →', () => {
@@ -552,7 +558,7 @@ const renderModDetail = () => {
   const hdrLeft = div({});
   hdrLeft.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '4px' } }, 'Modulo di Controllo'));
   hdrLeft.appendChild(el('h2', { style: { marginBottom: '6px' } }, mod.titolo));
-  hdrLeft.appendChild(div({ className: 'flex small muted' }, ...[mod.matricola || '—', `Ed.${mod.edizione} Rev.${mod.revisione}`, mod.denominazione, `${mod.argomenti.length} arg · ${totPt} punti`].filter(Boolean).map(t => span({}, t))));
+  hdrLeft.appendChild(div({ className: 'flex small muted' }, ...[mod.matricola || '—', `Ed.${mod.edizione} Rev.${mod.revisione}`, mod.denominazione, (mod.dataInizio || mod.dataFine) ? `📅 ${mod.dataInizio || '?'} → ${mod.dataFine || '?'}` : '', `${mod.argomenti.length} arg · ${totPt} punti`].filter(Boolean).map(t => span({}, t))));
   hdrRow.appendChild(hdrLeft);
   hdrRow.appendChild(btn('btn-success', '▶ Lancia Check List', () => showLanciaModal(mod)));
   hdr.appendChild(hdrRow);
@@ -562,8 +568,9 @@ const renderModDetail = () => {
   const dati = div({ className: 'card mb16' });
   dati.appendChild(div({ className: 'xsmall muted bold mb16', style: { textTransform: 'uppercase', letterSpacing: '.08em' } }, 'Dati Modulo'));
   const g = div({ className: 'grid2' });
-  const mkF = (lbl, key) => { const i = input({ value: mod[key] }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
+  const mkF = (lbl, key) => { const i = input({ value: mod[key] || '' }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
   mkF('Titolo', 'titolo'); mkF('Matricola', 'matricola'); mkF('Edizione', 'edizione'); mkF('Revisione', 'revisione'); mkF('Denominazione', 'denominazione');
+  mkF('📅 Data inizio (pianificata)', 'dataInizio'); mkF('📅 Data fine (pianificata)', 'dataFine');
   dati.appendChild(g);
   root.appendChild(dati);
 
@@ -1199,7 +1206,7 @@ const renderReport = () => {
 
   // Meta
   const metaGrid = div({ className: 'grid2 mb20' });
-  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
+  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${cl.dataInizio || '?'} → ${cl.dataFine || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
     const c = div({ style: { padding: '10px 14px', background: 'var(--surface)', borderRadius: '8px' } });
     c.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', marginBottom: '3px' } }, k));
     c.appendChild(div({ style: { fontSize: '13px', fontWeight: '600' } }, v));
@@ -1461,7 +1468,7 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
   ${para(cl.moduloTitolo, { bold: true, size: 24, spAfter: 60 })}
   ${para(`Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, { bold: true, size: 22, color: cl.chiusa ? (cl.esito === 'OK' ? '1a7a4a' : 'c0392b') : 'b7770d', spAfter: 160 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="2000"/><w:gridCol w:w="6500"/></w:tblGrid>
-  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
+  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${cl.dataInizio || '?'} → ${cl.dataFine || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
   ${para(' ', { spBefore: 60, spAfter: 40 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[2125, 2125, 2125, 2125].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
   ${trow([{ t: 'Conformi' }, { t: 'Non conformi' }, { t: 'N/A' }, { t: 'Da verificare' }], true)}
