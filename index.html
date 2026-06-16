@@ -526,8 +526,8 @@ const renderNuovoMod = () => {
   fields.appendChild(g2);
   mkInp('Denominazione / Emittente', 'denominazione', 'es. Ufficio Qualità');
   const g3 = div({ className: 'grid2' });
-  const iDi = input({ type: 'date' }); iDi.addEventListener('input', e => f.dataInizio = e.target.value);
-  const iDf = input({ type: 'date' }); iDf.addEventListener('input', e => f.dataFine = e.target.value);
+  const iDi = input({ type: 'date' }); iDi.addEventListener('input', e => f.dataInizio = e.target.value); iDi.addEventListener('click', () => { try { iDi.showPicker(); } catch (_) {} });
+  const iDf = input({ type: 'date' }); iDf.addEventListener('input', e => f.dataFine = e.target.value); iDf.addEventListener('click', () => { try { iDf.showPicker(); } catch (_) {} });
   g3.appendChild(fieldGroup('📅 Data inizio (pianificata)', iDi)); g3.appendChild(fieldGroup('📅 Data fine (pianificata)', iDf));
   fields.appendChild(g3);
   card.appendChild(fields);
@@ -573,7 +573,7 @@ const renderModDetail = () => {
   const g = div({ className: 'grid2' });
   const mkF = (lbl, key) => { const i = input({ value: mod[key] || '' }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
   mkF('Titolo', 'titolo'); mkF('Matricola', 'matricola'); mkF('Edizione', 'edizione'); mkF('Revisione', 'revisione'); mkF('Denominazione', 'denominazione');
-  const mkD = (lbl, key) => { const i = input({ type: 'date', value: mod[key] || '' }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); g.appendChild(fieldGroup(lbl, i)); };
+  const mkD = (lbl, key) => { const i = input({ type: 'date', value: mod[key] || '' }); i.addEventListener('input', e => { mod[key] = e.target.value; save(); }); i.addEventListener('click', () => { try { i.showPicker(); } catch (_) {} }); g.appendChild(fieldGroup(lbl, i)); };
   mkD('📅 Data inizio (pianificata)', 'dataInizio'); mkD('📅 Data fine (pianificata)', 'dataFine');
   dati.appendChild(g);
   root.appendChild(dati);
