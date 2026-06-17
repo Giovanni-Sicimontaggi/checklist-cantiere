@@ -1418,16 +1418,26 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
     ${trow([{ t: 'Nominativo', w: 4250 }, { t: 'Mansione / Ruolo', w: 4250 }], true)}
     ${personale.map(p => trow([{ t: p.nominativo || '—', w: 4250 }, { t: p.mansione || '—', w: 4250 }])).join('')}</w:tbl>`;
 
-  const cpSection = cl.argomenti.map(arg => {
+  const subPar = (lbl, val, col) => `<w:p><w:pPr><w:spacing w:before="0" w:after="20"/><w:ind w:left="120"/></w:pPr><w:r><w:rPr><w:b/><w:i/><w:sz w:val="15"/><w:szCs w:val="15"/><w:color w:val="${col}"/></w:rPr><w:t xml:space="preserve">${xe2(lbl)}: </w:t></w:r><w:r><w:rPr><w:i/><w:sz w:val="15"/><w:szCs w:val="15"/><w:color w:val="555555"/></w:rPr><w:t xml:space="preserve">${xe2(val)}</w:t></w:r></w:p>`;
+  const cpSection = cl.argomenti.map((arg, ai) => {
     const pers = getNome(arg.personaleId);
     const rOk = arg.checkPoints.filter(p => p.esito === 'OK').length;
     const rApp = arg.checkPoints.length - arg.checkPoints.filter(p => p.esito === 'N/A').length;
     const rPct = rApp ? Math.round(rOk / rApp * 100) : 0;
+    const cpRow = (p) => {
+      let cell = `<w:p><w:pPr><w:spacing w:before="40" w:after="20"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr><w:t xml:space="preserve">${xe2(p.point)}</w:t></w:r></w:p>`;
+      if (p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) cell += subPar('Verificato con', getNome(p.personaleId).nominativo, '3a6ea5');
+      if (p.noteAuditor) cell += subPar('Note Auditor', p.noteAuditor, '1a7a4a');
+      if (p.note) cell += subPar('Note', p.note, '777777');
+      if (p.nc) cell += subPar('Non Conformità', `${p.nc.numero} [${p.nc.stato}] — Prev: ${p.nc.giorniPrevisti || '—'}gg / Eff: ${p.nc.giorniEffettivi || '—'}gg`, 'c0392b');
+      if (p.segnalazione) cell += subPar('Segnalazione', `${p.segnalazione.numero} (${p.segnalazione.priorita})`, '8a2be2');
+      return `<w:tr><w:tc><w:tcPr><w:tcW w:w="400" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve">${String(p.n).padStart(2, '0')}</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="7300" w:type="dxa"/></w:tcPr>${cell}</w:tc><w:tc><w:tcPr><w:tcW w:w="800" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="${EH[p.esito]}"/></w:rPr><w:t xml:space="preserve">${xe2(p.esito)}</w:t></w:r></w:p></w:tc></w:tr>`;
+    };
     return [
-      para(`${arg.titolo} — ${rApp ? rPct + '% conformità (' + rOk + '/' + rApp + ')' : 'n.d.'}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
+      para(`${String(ai + 1).padStart(2, '0')}. ${arg.titolo} — ${rApp ? rPct + '% conformità (' + rOk + '/' + rApp + ')' : 'n.d.'}${pers ? ` — Intervistato: ${pers.nominativo}${pers.mansione ? ` (${pers.mansione})` : ''}` : ''}`, { bold: true, size: 20, color: '1a4a2a', spBefore: 160, spAfter: 60 }),
       `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="400"/><w:gridCol w:w="7300"/><w:gridCol w:w="800"/></w:tblGrid>`,
       trow([{ t: 'N.', w: 400 }, { t: 'Punto di Controllo', w: 7300 }, { t: 'Esito', w: 800 }], true),
-      ...arg.checkPoints.map(p => { const ex = [(p.personaleId && p.personaleId !== arg.personaleId && getNome(p.personaleId)) ? 'Verif. con: ' + getNome(p.personaleId).nominativo : '', p.noteAuditor ? 'Note Auditor: ' + p.noteAuditor : '', p.note ? 'Note: ' + p.note : '', p.nc ? `NC ${p.nc.numero} [${p.nc.stato}] Prev:${p.nc.giorniPrevisti || '—'}gg Eff:${p.nc.giorniEffettivi || '—'}gg` : '', p.segnalazione ? `SEG ${p.segnalazione.numero} ${p.segnalazione.priorita}` : ''].filter(Boolean).join(' · '); return trow([{ t: String(p.n).padStart(2, '0'), w: 400 }, { t: p.point + (ex ? ' [' + ex + ']' : ''), w: 7300 }, { t: p.esito, w: 800, c: EH[p.esito], b: true }]); }),
+      ...arg.checkPoints.map(cpRow),
       '</w:tbl>'
     ].join('');
   }).join('');
