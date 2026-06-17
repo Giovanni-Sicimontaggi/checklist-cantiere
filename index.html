@@ -752,6 +752,22 @@ const renderCLDetail = () => {
   if (!cl.chiusa) hdrBtns.appendChild(btn('btn-success btn-sm', '✓ Concludi Audit', () => showCloseModal(cl)));
   hdrRow.appendChild(hdrBtns);
   hdr.appendChild(hdrRow);
+  // Date audit (inizio / fine) modificabili
+  const dateRow = div({ className: 'flex mt12', style: { gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' } });
+  const mkAuditDate = (lbl, key) => {
+    const wrap = div({});
+    wrap.appendChild(el('label', {}, lbl));
+    if (!cl.chiusa) {
+      const i = input({ type: 'date', value: cl[key] || '', style: { maxWidth: '180px' } });
+      i.addEventListener('input', e => { cl[key] = e.target.value; save(); });
+      i.addEventListener('click', () => { try { i.showPicker(); } catch (_) {} });
+      wrap.appendChild(i);
+    } else { wrap.appendChild(div({ className: 'small', style: { fontWeight: '600' } }, fmtD(cl[key]) || '—')); }
+    return wrap;
+  };
+  dateRow.appendChild(mkAuditDate('📅 Data inizio audit', 'dataInizio'));
+  dateRow.appendChild(mkAuditDate('📅 Data fine audit', 'dataFine'));
+  hdr.appendChild(dateRow);
   const barRow = div({ style: { marginTop: '14px' } });
   const barInfo = div({ className: 'flex small muted mb8' });
   barInfo.appendChild(span({}, `${cl.argomenti.length} argomenti · ${done}/${allCP.length} punti verificati`));
@@ -1236,7 +1252,7 @@ const renderReport = () => {
 
   // Meta
   const metaGrid = div({ className: 'grid2 mb20' });
-  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${fmtD(cl.dataInizio) || '?'} → ${fmtD(cl.dataFine) || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
+  [['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Data inizio audit', fmtD(cl.dataInizio) || '—'], ['Data fine audit', fmtD(cl.dataFine) || '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].forEach(([k, v]) => {
     const c = div({ style: { padding: '10px 14px', background: 'var(--surface)', borderRadius: '8px' } });
     c.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', marginBottom: '3px' } }, k));
     c.appendChild(div({ style: { fontSize: '13px', fontWeight: '600' } }, v));
@@ -1509,7 +1525,7 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
   ${para(cl.moduloTitolo, { bold: true, size: 24, spAfter: 60 })}
   ${para(`Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, { bold: true, size: 22, color: cl.chiusa ? (cl.esito === 'OK' ? '1a7a4a' : 'c0392b') : 'b7770d', spAfter: 160 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="2000"/><w:gridCol w:w="6500"/></w:tblGrid>
-  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Periodo pianificato', (cl.dataInizio || cl.dataFine) ? `${fmtD(cl.dataInizio) || '?'} → ${fmtD(cl.dataFine) || '?'}` : '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
+  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Data inizio audit', fmtD(cl.dataInizio) || '—'], ['Data fine audit', fmtD(cl.dataFine) || '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
   ${para(' ', { spBefore: 60, spAfter: 40 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[2125, 2125, 2125, 2125].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
   ${trow([{ t: 'Conformi' }, { t: 'Non conformi' }, { t: 'N/A' }, { t: 'Da verificare' }], true)}
