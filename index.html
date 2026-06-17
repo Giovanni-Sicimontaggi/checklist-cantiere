@@ -119,6 +119,24 @@ let pendingScrollArg = null;
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return null; } };
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DB)); } catch {} };
 
+// ─── LOGO AZIENDALE ───
+let LOGO = (() => { try { return JSON.parse(localStorage.getItem('cantiere_logo') || 'null'); } catch { return null; } })();
+const setLogoFromFile = (file, cb) => {
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      LOGO = { data: r.result, w: img.naturalWidth, h: img.naturalHeight, mime: file.type };
+      try { localStorage.setItem('cantiere_logo', JSON.stringify(LOGO)); } catch (e) { alert('Immagine troppo grande per essere salvata: usa un logo più leggero (es. PNG/JPG sotto 1 MB).'); LOGO = null; return; }
+      cb && cb();
+    };
+    img.onerror = () => alert('Immagine non valida.');
+    img.src = r.result;
+  };
+  r.readAsDataURL(file);
+};
+const removeLogo = () => { LOGO = null; try { localStorage.removeItem('cantiere_logo'); } catch {} };
+
 // ─── BACKUP / RIPRISTINO ────────────────────────────────────────────────────────
 const exportDB = () => {
   const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
@@ -276,6 +294,15 @@ const renderDashboard = () => {
   row.appendChild(bigBtn('🗂', 'Crea Modulo', 'Crea un nuovo modulo di controllo', 'var(--accent2)', () => go('nuovo-mod')));
   row.appendChild(bigBtn('📊', 'KPI', 'Statistiche e indicatori', 'var(--info)', () => go('kpi')));
   root.appendChild(row);
+  // Logo aziendale
+  const logoRow = div({ className: 'flex', style: { justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '8px' } });
+  if (LOGO) logoRow.appendChild(el('img', { src: LOGO.data, style: { maxHeight: '40px', maxWidth: '140px', objectFit: 'contain', opacity: '.9' } }));
+  const dashLogoInput = input({ type: 'file', accept: 'image/*', style: { display: 'none' } });
+  dashLogoInput.addEventListener('change', e => { if (e.target.files[0]) setLogoFromFile(e.target.files[0], () => render()); });
+  logoRow.appendChild(iconBtn('', LOGO ? '🏢 Cambia logo azienda' : '🏢 Carica logo azienda', () => dashLogoInput.click()));
+  if (LOGO) logoRow.appendChild(iconBtn('', '🗑 Rimuovi', () => { if (confirm('Rimuovere il logo aziendale?')) { removeLogo(); render(); } }));
+  logoRow.appendChild(dashLogoInput);
+  root.appendChild(logoRow);
   return root;
 };
 
@@ -1241,11 +1268,14 @@ const renderReport = () => {
   const root = div({ className: 'fade' });
   const card = div({ className: 'card' });
 
-  // Titolo
-  const titRow = div({ style: { borderBottom: '2px solid var(--accent)', paddingBottom: '14px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } });
-  const titLeft = div({});
-  titLeft.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '4px' } }, 'Report Audit'));
-  titLeft.appendChild(el('h2', {}, cl.moduloTitolo));
+  // Titolo (con logo aziendale)
+  const titRow = div({ style: { borderBottom: '2px solid var(--accent)', paddingBottom: '14px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' } });
+  const titLeft = div({ style: { display: 'flex', alignItems: 'center', gap: '16px', flex: '1' } });
+  if (LOGO) titLeft.appendChild(el('img', { src: LOGO.data, style: { maxHeight: '64px', maxWidth: '200px', objectFit: 'contain' } }));
+  const titText = div({});
+  titText.appendChild(div({ className: 'xsmall muted', style: { textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '4px' } }, 'Report Audit'));
+  titText.appendChild(el('h2', {}, cl.moduloTitolo));
+  titLeft.appendChild(titText);
   titRow.appendChild(titLeft);
   titRow.appendChild(badge(cl.chiusa ? (cl.esito === 'OK' ? 'b-ok' : 'b-no') : 'b-wip', cl.chiusa ? cl.esito : 'In corso'));
   card.appendChild(titRow);
@@ -1412,6 +1442,11 @@ const renderReport = () => {
     navigator.clipboard.writeText(txt).then(() => alert('Report copiato!'));
   }));
   btns.appendChild(btn('btn-success', '📄 Scarica Word (.docx)', () => downloadDocx(cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totMin)));
+  const logoInput = input({ type: 'file', accept: 'image/*', style: { display: 'none' } });
+  logoInput.addEventListener('change', e => { if (e.target.files[0]) setLogoFromFile(e.target.files[0], () => render()); });
+  btns.appendChild(btn('btn-ghost', LOGO ? '🏢 Cambia logo' : '🏢 Carica logo', () => logoInput.click()));
+  if (LOGO) btns.appendChild(btn('btn-ghost', '🗑 Rimuovi logo', () => { if (confirm('Rimuovere il logo aziendale?')) { removeLogo(); render(); } }));
+  btns.appendChild(logoInput);
   btns.appendChild(btn('btn-ghost', '← Torna all\'Audit', () => go('cl-detail')));
   card.appendChild(btns);
   root.appendChild(card);
@@ -1520,12 +1555,36 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
     chartDrawingXml = `<w:p><w:pPr><w:spacing w:before="200" w:after="120"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${emuW}" cy="${emuH}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Grafici"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="Grafici"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId100"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emuW}" cy="${emuH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
   } catch (e) { chartImgBytes = null; chartDrawingXml = ''; }
 
+  // ── Logo aziendale (immagine) per il Word ──
+  let logoBytes = null, logoDrawingXml = '', logoExt = 'png';
+  if (LOGO && LOGO.data) {
+    try {
+      const comma = LOGO.data.indexOf(',');
+      const mime = (LOGO.data.slice(0, comma).match(/data:(.*?);/) || [, 'image/png'])[1];
+      logoExt = (mime.indexOf('jpeg') >= 0 || mime.indexOf('jpg') >= 0) ? 'jpg' : (mime.indexOf('gif') >= 0 ? 'gif' : 'png');
+      const bin = atob(LOGO.data.slice(comma + 1));
+      logoBytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) logoBytes[i] = bin.charCodeAt(i);
+      const dispW = 170, ratio = (LOGO.w && LOGO.h) ? LOGO.h / LOGO.w : 0.4;
+      const ew = Math.round(dispW * 9525), eh = Math.round(dispW * ratio * 9525);
+      logoDrawingXml = `<w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${ew}" cy="${eh}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="2" name="Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="2" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId101"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${ew}" cy="${eh}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+    } catch (e) { logoBytes = null; logoDrawingXml = ''; }
+  }
+
+  // ── Tabella dati audit: 2 coppie per riga (date affiancate) ──
+  const metaPairs = [
+    ['Data inizio audit', fmtD(cl.dataInizio) || '—', 'Data fine audit', fmtD(cl.dataFine) || '—'],
+    ['Postazione', cl.postazione || '—', 'Ambito', cl.ambito || '—'],
+    ['Auditor', cl.persona || '—', 'Data report', cl.data || '—'],
+    ['Matricola', cl.moduloMatricola || '—', 'Oggetto', cl.oggetto || '—']
+  ];
+  const metaTbl = `<w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="1750"/><w:gridCol w:w="2500"/><w:gridCol w:w="1750"/><w:gridCol w:w="2500"/></w:tblGrid>${metaPairs.map(r => trow([{ t: r[0], w: 1750, b: true }, { t: r[1], w: 2500 }, { t: r[2], w: 1750, b: true }, { t: r[3], w: 2500 }])).join('')}</w:tbl>`;
+
   const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>
+  ${logoDrawingXml}
   ${para('REPORT AUDIT CANTIERE', { bold: true, size: 32, color: 'F5A623', spAfter: 100 })}
   ${para(cl.moduloTitolo, { bold: true, size: 24, spAfter: 60 })}
   ${para(`Esito: ${cl.chiusa ? cl.esito : 'In corso'}`, { bold: true, size: 22, color: cl.chiusa ? (cl.esito === 'OK' ? '1a7a4a' : 'c0392b') : 'b7770d', spAfter: 160 })}
-  <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid><w:gridCol w:w="2000"/><w:gridCol w:w="6500"/></w:tblGrid>
-  ${[['Postazione', cl.postazione], ['Ambito', cl.ambito || '—'], ['Auditor', cl.persona || '—'], ['Data', cl.data], ['Data inizio audit', fmtD(cl.dataInizio) || '—'], ['Data fine audit', fmtD(cl.dataFine) || '—'], ['Matricola', cl.moduloMatricola || '—'], ['Oggetto', cl.oggetto || '—']].map(([k, v]) => trow([{ t: k, w: 2000, b: true }, { t: v, w: 6500 }])).join('')}</w:tbl>
+  ${metaTbl}
   ${para(' ', { spBefore: 60, spAfter: 40 })}
   <w:tbl><w:tblPr><w:tblW w:w="8500" w:type="dxa"/>${brd}</w:tblPr><w:tblGrid>${[2125, 2125, 2125, 2125].map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>
   ${trow([{ t: 'Conformi' }, { t: 'Non conformi' }, { t: 'N/A' }, { t: 'Da verificare' }], true)}
@@ -1549,12 +1608,14 @@ const downloadDocx = (cl, personale, allCP, ptsNC, allAnom, ok, no, na, nd, totM
   const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
   const entry = (name, data) => { const nb = enc.encode(name); const crc = crc32(data); const local = new Uint8Array([0x50, 0x4B, 0x03, 0x04, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nb.length), 0, 0, ...nb]); return { nb, data, crc, local, offset: 0 }; };
   const buildZip = entries => { let off = 0; const parts = [], cents = []; for (const e of entries) { e.offset = off; parts.push(e.local, e.data); off += e.local.length + e.data.length; cents.push(new Uint8Array([0x50, 0x4B, 0x01, 0x02, 20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(e.crc), ...u32(e.data.length), ...u32(e.data.length), ...u16(e.nb.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...u32(e.offset), ...e.nb])); } const cdSize = cents.reduce((s, c) => s + c.length, 0); const eocd = new Uint8Array([0x50, 0x4B, 0x05, 0x06, 0, 0, 0, 0, ...u16(entries.length), ...u16(entries.length), ...u32(cdSize), ...u32(off), 0, 0]); const total = parts.reduce((s, p) => s + p.length, 0) + cdSize + eocd.length; const out = new Uint8Array(total); let pos = 0; const w = b => { out.set(b, pos); pos += b.length; }; parts.forEach(w); cents.forEach(w); w(eocd); return out; };
-  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/><Default Extension="jpeg" ContentType="image/jpeg"/><Default Extension="gif" ContentType="image/gif"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
   const imgRel = chartImgBytes ? `<Relationship Id="rId100" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/chart.png"/>` : '';
-  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${imgRel}</Relationships>`;
+  const logoRel = logoBytes ? `<Relationship Id="rId101" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.${logoExt}"/>` : '';
+  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${imgRel}${logoRel}</Relationships>`;
   const zipEntries = [entry('[Content_Types].xml', toB(ct)), entry('_rels/.rels', toB(rels)), entry('word/document.xml', toB(docXml)), entry('word/_rels/document.xml.rels', toB(wrels))];
   if (chartImgBytes) zipEntries.push(entry('word/media/chart.png', chartImgBytes));
+  if (logoBytes) zipEntries.push(entry('word/media/logo.' + logoExt, logoBytes));
   const bytes = buildZip(zipEntries);
   const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
